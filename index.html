@@ -27,9 +27,25 @@
     --lilac:#C7A8FF; --coral:#FF7A59; --cash:#FFE66D; --danger:#FF5C7A;
     --pink:#FF9ECF;
     --r:16px; --ts:64px;
+    --panel:rgba(0,0,0,.30);
+    --panel-lip:inset 0 2px 0 rgba(255,255,255,.08);
+    --lift:0 10px 26px rgba(0,0,0,.35);
+    --shopw:372px;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;}
   html,body{height:100%;margin:0;overflow:hidden;}
+  body::before{
+    content:'';position:fixed;inset:-25%;z-index:-1;pointer-events:none;
+    background:
+      radial-gradient(38% 32% at 22% 18%, rgba(124,224,195,.16), transparent 70%),
+      radial-gradient(34% 30% at 82% 26%, rgba(199,168,255,.18), transparent 70%),
+      radial-gradient(46% 38% at 50% 96%, rgba(143,196,255,.12), transparent 72%);
+    animation:drift 34s ease-in-out infinite alternate;
+  }
+  @keyframes drift{
+    50%{transform:translate3d(2.5%,-2%,0) scale(1.06);}
+    100%{transform:translate3d(-2%,2.5%,0) scale(1.02);}
+  }
   body{
     background:radial-gradient(130% 100% at 50% -10%, #3A3180 0%, var(--bg) 46%, var(--bg2) 100%);
     color:var(--paper);
@@ -38,13 +54,34 @@
     touch-action:manipulation; overscroll-behavior:none;
   }
   button{font-family:inherit;font-weight:600;border:0;background:none;color:inherit;cursor:pointer;touch-action:manipulation;}
+  :focus-visible{outline:3px solid var(--mint);outline-offset:2px;border-radius:8px;}
+  @media (hover:hover){
+    .tile.empty:hover{transform:translateY(-2px);}
+    .tile.machine:hover{transform:translateY(-2px) scale(1.02);}
+    .tool:hover{background:rgba(255,255,255,.10);}
+    .hallchip:hover{opacity:.9;}
+    .card:hover{background:rgba(0,0,0,.34);}
+  }
   .num{font-variant-numeric:tabular-nums;}
 
+  .playcol{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:9px;}
+  /* buy-multiplier switch */
+  .mult{display:flex;gap:5px;background:rgba(0,0,0,.3);padding:5px;border-radius:12px;margin-bottom:4px;}
+  .mult button{flex:1;padding:7px 2px;border-radius:9px;font-size:12.5px;opacity:.6;}
+  .mult button.on{background:var(--paper);color:var(--ink);opacity:1;}
+  /* site readout */
+  .stat{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:7px 12px;
+    background:rgba(0,0,0,.22);border-radius:11px;box-shadow:var(--panel-lip);}
+  .stat b{font-weight:600;color:var(--mint);}
+  .stat.bad b{color:var(--danger);}
+  .kbd{font-size:11.5px;opacity:.42;text-align:center;padding-top:4px;display:none;}
+  @media (min-width:1000px){ .kbd{display:block;} }
   #app{position:fixed;inset:0;display:flex;flex-direction:column;gap:9px;
     padding:calc(env(safe-area-inset-top) + 9px) calc(env(safe-area-inset-right) + 11px) calc(env(safe-area-inset-bottom) + 9px) calc(env(safe-area-inset-left) + 11px);}
 
   /* ---------- header ---------- */
   header{display:flex;align-items:center;gap:9px;flex:0 0 auto;}
+  .meters{max-width:520px;}
   .wallet{display:flex;align-items:baseline;gap:7px;background:rgba(0,0,0,.3);border-radius:999px;padding:8px 17px;
     box-shadow:inset 0 2px 0 rgba(255,255,255,.08);position:relative;}
   .wallet .amt{font-size:26px;font-weight:700;color:var(--cash);line-height:1;}
@@ -134,6 +171,13 @@
   .cov{position:absolute;pointer-events:none;opacity:0;transition:opacity .2s, box-shadow .2s;}
   .cov.cool{inset:0;border-radius:var(--r);box-shadow:inset 0 0 0 2px rgba(143,196,255,.32);}
   .cov.wire{inset:5px;border-radius:calc(var(--r) - 4px);box-shadow:inset 0 0 0 2px rgba(70,199,164,.38);}
+  .cov.spine{inset:0;border-radius:var(--r);
+    background:radial-gradient(circle at 50% 50%, rgba(255,209,102,.20), transparent 68%);}
+  .tile.spined .cov.spine{opacity:1;}
+  #floor.spinemode .tile.spined .cov.spine{
+    background:radial-gradient(circle at 50% 50%, rgba(255,209,102,.46), transparent 72%);}
+  .tile.spineflash .cov.spine{opacity:1;
+    background:radial-gradient(circle at 50% 50%, rgba(255,230,109,.6), transparent 74%);}
   .tile.cooled .cov.cool,.tile.wired .cov.wire{opacity:1;}
   #floor.fanmode .tile.cooled .cov.cool{box-shadow:inset 0 0 0 2px rgba(143,196,255,.95), inset 0 0 16px rgba(143,196,255,.34);}
   #floor.wiremode .tile.wired .cov.wire{box-shadow:inset 0 0 0 2px rgba(70,199,164,1), inset 0 0 14px rgba(70,199,164,.36);}
@@ -176,7 +220,8 @@
   /* ---------- tray ---------- */
   .hint{flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:13px;opacity:.72;min-height:19px;text-align:center;padding:0 6px;}
   .tray{flex:0 0 auto;display:flex;gap:7px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
-    -webkit-overflow-scrolling:touch;padding-bottom:2px;scroll-snap-type:x proximity;}
+    -webkit-overflow-scrolling:touch;padding-bottom:2px;scroll-snap-type:x proximity;
+    justify-content:flex-start;}
   .tray::-webkit-scrollbar{display:none;}
   .tool{flex:0 0 auto;width:60px;background:rgba(0,0,0,.3);border-radius:15px;padding:7px 3px 8px;display:flex;flex-direction:column;align-items:center;gap:1px;
     box-shadow:inset 0 2px 0 rgba(255,255,255,.07);transition:transform .09s;position:relative;scroll-snap-align:start;}
@@ -221,6 +266,9 @@
   .card .mid{flex:1;min-width:0;}
   .card .t{font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
   .card .lv{font-size:10.5px;background:rgba(255,255,255,.17);padding:2px 7px;border-radius:99px;font-weight:600;}
+  .card .lvbar{height:4px;border-radius:99px;background:rgba(0,0,0,.35);margin-top:7px;overflow:hidden;display:none;}
+  .card .lvbar.on{display:block;}
+  .card .lvbar i{display:block;height:100%;border-radius:99px;background:var(--mint);transition:width .25s;}
   .card .d{font-size:12.5px;opacity:.62;margin-top:2px;line-height:1.35;}
   .buy{flex:0 0 auto;background:var(--mint);color:#0C4437;border-radius:12px;padding:10px 12px;font-size:13.5px;font-weight:700;
     box-shadow:0 4px 0 #4EB99A;min-width:76px;}
@@ -256,11 +304,48 @@
       overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
     .meter .top{justify-content:center;}
   }
+  /* ---------- desktop ---------- */
+  /* Below this the shop is an overlay drawer; at and above it, the shop is a
+     permanent right-hand column and the play area keeps the rest. */
+  @media (min-width:1000px){
+    #app{flex-direction:row;gap:16px;
+      padding:calc(env(safe-area-inset-top) + 16px) calc(env(safe-area-inset-right) + 16px)
+              calc(env(safe-area-inset-bottom) + 16px) calc(env(safe-area-inset-left) + 16px);}
+    .playcol{flex:1;min-width:0;display:flex;flex-direction:column;gap:11px;}
+    header{max-width:900px;width:100%;align-self:center;}
+    .meters{max-width:none;}
+    .shopbtn{display:none;}
+    #scrim{display:none!important;}
+    #drawer{position:static;transform:none;width:var(--shopw);flex:0 0 var(--shopw);
+      border-radius:26px;box-shadow:var(--lift);padding:16px 14px;}
+    #dclose{display:none;}
+    /* Every tool visible at once beats a scrolling strip when there is room. */
+    .tray{flex-wrap:wrap;justify-content:center;overflow:visible;row-gap:8px;
+      align-self:center;width:100%;}
+    /* Six tabs will not fit one 372px row, and a scrolled tab strip hides them. */
+    .tabs{flex-wrap:wrap;overflow:visible;row-gap:4px;justify-content:center;}
+    .tab{flex:0 1 auto;padding:8px 11px;font-size:12.5px;}
+    /* A compact tool strip hands the vertical space back to the board, which is
+       what the height cap is competing for on a laptop screen. */
+    .tool{width:64px;padding:5px 3px 6px;}
+    .tool svg{width:23px;height:23px;}
+    .tool .n{font-size:11px;} .tool .c{font-size:11px;}
+    .hint{font-size:14px;min-height:22px;}
+    .tabs{margin-bottom:12px;}
+    .card .d{font-size:13px;}
+    .wallet .amt{font-size:28px;}
+  }
+  @media (min-width:1400px){
+    :root{--shopw:410px;}
+    header{max-width:1040px;}
+  }
+
   @media (prefers-reduced-motion:reduce){*{animation:none!important;}}
 </style>
 </head>
 <body>
 <div id="app">
+  <div class="playcol">
   <header>
     <div class="wallet" id="wallet"><span class="amt num" id="cash">$0</span><span class="rate num" id="rate"></span></div>
     <div class="meters">
@@ -283,25 +368,27 @@
   </main>
   <div class="hint" id="hint" aria-live="polite"></div>
   <div class="tray" id="tray"></div>
-</div>
-
-<div id="scrim"></div>
-<div id="drawer">
-  <div class="dhead">
-    <span class="money num" id="dcash">$0</span>
-    <span class="renown num" id="drenown">★0</span>
-    <span class="sp"></span>
-    <button class="close" id="dclose">✕</button>
   </div>
-  <div class="tabs">
-    <button class="tab on" data-tab="upgrades">Upgrades</button>
-    <button class="tab" data-tab="hardware">Hardware</button>
-    <button class="tab" data-tab="automate">Automate</button>
-    <button class="tab" data-tab="floor">Floor</button>
-    <button class="tab hide" data-tab="rebirth" id="rebirthtab">Rebirth</button>
+  <div id="scrim"></div>
+  <div id="drawer">
+    <div class="dhead">
+      <span class="money num" id="dcash">$0</span>
+      <span class="renown num" id="drenown">★0</span>
+      <span class="sp"></span>
+      <button class="close" id="dclose">✕</button>
+    </div>
+    <div class="tabs">
+      <button class="tab on" data-tab="upgrades">Upgrades</button>
+      <button class="tab" data-tab="hardware">Hardware</button>
+      <button class="tab" data-tab="automate">Automate</button>
+      <button class="tab" data-tab="floor">Floor</button>
+      <button class="tab" data-tab="site">Site</button>
+      <button class="tab hide" data-tab="rebirth" id="rebirthtab">Rebirth</button>
+    </div>
+    <div class="list" id="dlist"></div>
+      <div class="kbd" id="kbd"></div>
+      <div class="savenote" id="savenote"></div>
   </div>
-  <div class="list" id="dlist"></div>
-  <div class="savenote" id="savenote"></div>
 </div>
 
 <div id="toasts"></div>
@@ -415,6 +502,56 @@ const ART = {
     <rect x="7" y="51" width="50" height="4" rx="2" fill="rgba(0,0,0,.18)"/>
     <rect class="fillbar" data-max="42" x="11" y="52" width="${42*o.f}" height="2" rx="1" fill="#FFFFFF"/>
   </svg>`,
+  tank:(o)=>`<svg class="art" viewBox="0 0 64 64">
+    <rect x="8" y="10" width="48" height="46" rx="8" fill="#1E6E7E"/>
+    <rect x="8" y="8" width="48" height="44" rx="8" fill="#2FA3B8"/>
+    <rect x="13" y="14" width="38" height="32" rx="5" fill="#0C3E49"/>
+    <rect x="13" y="22" width="38" height="24" rx="5" fill="#5FD8E8" opacity=".55" class="breathe"/>
+    <g fill="#0C3E49"><rect x="18" y="26" width="9" height="16" rx="2"/><rect x="30" y="26" width="9" height="16" rx="2"/></g>
+    <g fill="#CFF6FC"><circle cx="24" cy="20" r="2"/><circle cx="34" cy="17" r="1.5"/><circle cx="43" cy="21" r="1.7"/></g>
+    <rect x="8" y="49" width="48" height="4" rx="2" fill="rgba(0,0,0,.16)"/>
+    <rect class="fillbar" data-max="40" x="12" y="50" width="${40*o.f}" height="2" rx="1" fill="#FFFFFF"/>
+  </svg>`,
+  solar:(o)=>`<svg class="art" viewBox="0 0 64 64">
+    <rect x="6" y="14" width="52" height="38" rx="6" fill="#152C55"/>
+    <rect x="6" y="12" width="52" height="36" rx="6" fill="#24457E"/>
+    <g fill="#3E6FC0">
+      <rect x="10" y="16" width="14" height="12" rx="2"/><rect x="26" y="16" width="12" height="12" rx="2"/><rect x="40" y="16" width="14" height="12" rx="2"/>
+      <rect x="10" y="31" width="14" height="12" rx="2"/><rect x="26" y="31" width="12" height="12" rx="2"/><rect x="40" y="31" width="14" height="12" rx="2"/>
+    </g>
+    <circle cx="46" cy="21" r="6" fill="#FFE66D" opacity=".85" class="breathe"/>
+    <rect x="27" y="48" width="10" height="8" rx="2" fill="#152C55"/>
+  </svg>`,
+  spine:(o)=>`<svg class="art" viewBox="0 0 64 64">
+    <path d="M32 6v52M6 32h52" stroke="#FFD166" stroke-width="3" stroke-linecap="round" opacity=".55"/>
+    <rect x="12" y="22" width="40" height="22" rx="7" fill="#B8862A"/>
+    <rect x="12" y="20" width="40" height="21" rx="7" fill="#FFD166"/>
+    <g fill="#6B4700"><rect x="17" y="31" width="6" height="6" rx="2"/><rect x="26" y="31" width="6" height="6" rx="2"/>
+      <rect x="35" y="31" width="6" height="6" rx="2"/><rect x="44" y="31" width="4" height="6" rx="2"/></g>
+    <g fill="#6B4700" opacity=".8"><rect x="17" y="24" width="30" height="3" rx="1.5"/></g>
+    <circle cx="32" cy="32" r="3" fill="#FFF6D8" class="breathe"/>
+  </svg>`,
+  heatx:(o)=>`<svg class="art" viewBox="0 0 64 64">
+    <rect x="7" y="9" width="50" height="46" rx="9" fill="#A8452C"/>
+    <rect x="7" y="7" width="50" height="44" rx="9" fill="#F0714A"/>
+    <g stroke="#5FD8E8" stroke-width="3.4" stroke-linecap="round" fill="none" class="breathe">
+      <path d="M15 16c6 0 6 8 12 8s6-8 12-8 6 8 12 8"/>
+      <path d="M15 30c6 0 6 8 12 8s6-8 12-8 6 8 12 8"/>
+    </g>
+    <rect x="13" y="43" width="38" height="5" rx="2.5" fill="#5C1F0F"/>
+    <rect x="16" y="44" width="14" height="3" rx="1.5" fill="#FFE66D"/>
+  </svg>`,
+  quantum:(o)=>`<svg class="art" viewBox="0 0 64 64">
+    <rect x="7" y="7" width="50" height="52" rx="10" fill="#3B1F73"/>
+    <rect x="7" y="7" width="50" height="48" rx="10" fill="#6C3FD1"/>
+    <g class="spin" style="animation-duration:5s" stroke="#D9C6FF" stroke-width="2.2" fill="none" opacity=".8">
+      <ellipse cx="32" cy="30" rx="19" ry="8"/><ellipse cx="32" cy="30" rx="8" ry="19"/>
+    </g>
+    <circle cx="32" cy="30" r="8" fill="#F3ECFF" class="breathe"/>
+    <circle cx="32" cy="30" r="4" fill="#FFE66D"/>
+    <rect x="7" y="51" width="50" height="4" rx="2" fill="rgba(0,0,0,.2)"/>
+    <rect class="fillbar" data-max="42" x="11" y="52" width="${42*o.f}" height="2" rx="1" fill="#FFFFFF"/>
+  </svg>`,
   batt:(o)=>`<svg class="art" viewBox="0 0 64 64">
     <rect x="24" y="6" width="16" height="6" rx="3" fill="#2E7F6C"/>
     <rect x="10" y="11" width="44" height="45" rx="9" fill="#4FBF9C"/>
@@ -445,26 +582,56 @@ const MACH = {
   gpu:{  name:'GPU pod', base:950,   growth:1.24, draw:9,  heat:9.5, rate:4.4,  unlock:'gpu', desc:'Four racks of compute in one tile. Runs hot.' },
   ups:{  name:'UPS',     base:2600,  growth:1.27, draw:1,  cap:12, surge:16,    unlock:'ups', desc:'+12 kW, and carries 16 kW more through a surge.' },
   crac:{ name:'CRAC',    base:7000,  growth:1.30, draw:11, global:2.6,          unlock:'crac', desc:'Hall-wide cooling, near three chillers in one tile.' },
-  asic:{ name:'ASIC bay',base:26000, growth:1.26, draw:26, heat:24, rate:15,    unlock:'asic', desc:'Fifteen racks of compute. Runs ferociously hot.' }
+  asic:{ name:'ASIC bay',base:26000, growth:1.26, draw:26, heat:24, rate:15,    unlock:'asic', desc:'Fifteen racks of compute. Runs ferociously hot.' },
+  tank:{ name:'Tank',    base:60000, growth:1.25, draw:12, heat:2,  rate:7,     unlock:'tank', desc:'Immersion cooling: seven racks of compute that barely warms up.' },
+  solar:{name:'Solar',   base:90000, growth:1.24, draw:0,  cap:34,              unlock:'solar', desc:'+34 kW. No heat, no draw, no noise.' },
+  spine:{name:'Spine',   base:150000,growth:1.28, draw:6,  heat:2.5, row:0.14,  unlock:'spine', desc:'Every compute tile in its row and its column runs 14% faster.' },
+  heatx:{name:'Exchanger',base:380000,growth:1.30,draw:8,  global:1.4, recover:1, unlock:'heatx', desc:'Cools its hall and sells the heat it pulls out. Pays best in a hot hall.' },
+  quantum:{name:'Q-core',base:1200000,growth:1.26,draw:70, heat:55, rate:60,    unlock:'quantum', desc:'Sixty racks in one tile. Needs a power plant and a lot of ice.' }
 };
-const isCooler = t => t.type==='fan'||t.type==='ac'||t.type==='crac';
+const isCooler = t => t.type==='fan'||t.type==='ac'||t.type==='crac'||t.type==='heatx';
 
 const UPG = {
-  density:  {name:'Compute density', max:30, base:60,   growth:1.33, desc:l=>`Racks, pods and bays compute ${pct(0.22*l)} faster.`},
-  bandwidth:{name:'Bandwidth',       max:30, base:90,   growth:1.36, desc:l=>`Compute sells for $${(1+0.6*l).toFixed(1)} a unit.`},
-  buffer:   {name:'Rack memory',     max:20, base:120,  growth:1.38, desc:l=>`Holds ${8+5*l} units before it fills.`},
-  cooling:  {name:'Coolant loop',    max:25, base:150,  growth:1.34, desc:l=>`Fans, chillers and CRACs ${pct(0.18*l)} stronger.`},
-  thermal:  {name:'Heat sinks',      max:20, base:240,  growth:1.38, desc:l=>`Compute hardware runs ${pct(1-Math.pow(0.93,l))} cooler.`},
-  ambient:  {name:'Raised floor',    max:15, base:180,  growth:1.36, desc:l=>`Idle tiles shed heat ${pct(0.3*l)} faster.`},
-  filters:  {name:'Air filters',     max:20, base:340,  growth:1.34, desc:l=>`Dust settles ${pct(1-Math.pow(0.88,l))} slower.`},
-  power:    {name:'Efficient PSUs',  max:20, base:200,  growth:1.40, desc:l=>`Everything draws ${pct(1-Math.pow(0.93,l))} less power.`},
-  surge:    {name:'Switchgear',      max:15, base:320,  growth:1.42, desc:l=>`Total power capacity ${pct(0.09*l)} higher.`},
-  seals:    {name:'Pipe seals',      max:15, base:700,  growth:1.38, desc:l=>`Coolant leaks ${pct(1-Math.pow(0.82,l))} rarer.`},
-  mesh:     {name:'Switch fabric',   max:20, base:900,  growth:1.36, desc:l=>`Switches feed their neighbours ${pct(0.14*l)} harder.`},
-  conditioner:{name:'Line conditioner',max:15,base:1200,growth:1.40, desc:l=>`Power surges hit ${pct(1-Math.pow(0.88,l))} softer.`},
-  contracts:{name:'Client contracts',max:25, base:400,  growth:1.44, desc:l=>`All income ${pct(0.09*l)} higher.`},
-  override: {name:'Manual override', max:12, base:260,  growth:1.40, desc:l=>`Collecting by hand pays ${pct(0.16*l)} extra.`},
-  salvage:  {name:'Salvage yard',    max:10, base:1500, growth:1.45, desc:l=>`Selling hardware returns ${pct(0.5+0.03*l)} instead of half.`}
+  density:  {name:'Compute density', max:30, base:60,   growth:1.33, zero:'Make every rack, pod and bay compute faster. 22% a level.',
+             desc:l=>`Racks, pods and bays compute ${pct(0.22*l)} faster.`},
+  bandwidth:{name:'Bandwidth',       max:30, base:90,   growth:1.36,
+             desc:l=>`Compute sells for $${(1+0.6*l).toFixed(1)} a unit.`},
+  buffer:   {name:'Rack memory',     max:20, base:120,  growth:1.38,
+             desc:l=>`Holds ${8+5*l} units before it fills.`},
+  cooling:  {name:'Coolant loop',    max:25, base:150,  growth:1.34, zero:'Get more out of every fan, chiller and CRAC. 18% a level.',
+             desc:l=>`Fans, chillers and CRACs ${pct(0.18*l)} stronger.`},
+  thermal:  {name:'Heat sinks',      max:20, base:240,  growth:1.38, zero:'Compute hardware stops running so hot. 7% a level.',
+             desc:l=>`Compute hardware runs ${pct(1-Math.pow(0.93,l))} cooler.`},
+  ambient:  {name:'Raised floor',    max:15, base:180,  growth:1.36, zero:'Empty tiles shed the heat around them faster. 30% a level.',
+             desc:l=>`Idle tiles shed heat ${pct(0.3*l)} faster.`},
+  filters:  {name:'Air filters',     max:20, base:340,  growth:1.34, zero:'Slow the dust down before it chokes your cooling. 12% a level.',
+             desc:l=>`Dust settles ${pct(1-Math.pow(0.88,l))} slower.`},
+  power:    {name:'Efficient PSUs',  max:20, base:200,  growth:1.40, zero:'Everything on the floor draws less power. 7% a level.',
+             desc:l=>`Everything draws ${pct(1-Math.pow(0.93,l))} less power.`},
+  surge:    {name:'Switchgear',      max:15, base:320,  growth:1.42, zero:'Squeeze more capacity out of the power you already have. 9% a level.',
+             desc:l=>`Total power capacity ${pct(0.09*l)} higher.`},
+  seals:    {name:'Pipe seals',      max:15, base:700,  growth:1.38, zero:'Coolant lines burst less often. 18% a level.',
+             desc:l=>`Coolant leaks ${pct(1-Math.pow(0.82,l))} rarer.`},
+  mesh:     {name:'Switch fabric',   max:20, base:900,  growth:1.36, zero:'Switches feed their neighbours harder. 14% a level.',
+             desc:l=>`Switches feed their neighbours ${pct(0.14*l)} harder.`},
+  conditioner:{name:'Line conditioner',max:15,base:1200,growth:1.40, zero:'Take the edge off a power surge. 12% a level.',
+             desc:l=>`Power surges hit ${pct(1-Math.pow(0.88,l))} softer.`},
+  contracts:{name:'Client contracts',max:25, base:400,  growth:1.44, zero:'Raise what every client pays you. 9% a level.',
+             desc:l=>`All income ${pct(0.09*l)} higher.`},
+  override: {name:'Manual override', max:12, base:260,  growth:1.40, zero:'Get a bonus for collecting a rack by hand. 16% a level.',
+             desc:l=>`Collecting by hand pays ${pct(0.16*l)} extra.`},
+  salvage:  {name:'Salvage yard',    max:10, base:1500, growth:1.45, zero:'Get back more than half when you sell hardware. 3% a level.',
+             desc:l=>`Selling hardware returns ${pct(0.5+0.03*l)} instead of half.`},
+  logistics:{name:'Bulk purchasing',  max:15, base:2200, growth:1.42, zero:'Knock the price down on every machine you build. 4% a level.',
+             desc:l=>`Every machine costs ${pct(1-Math.pow(0.96,l))} less to build.`},
+  telemetry:{name:'Remote hands',     max:8,  base:5000, growth:1.50, zero:'A closed site currently banks 8 hours. Buy more. 2 hours a level.',
+             desc:l=>`A closed site keeps earning for ${8+2*l} hours instead of 8.`},
+  immersion:{name:'Immersion coolant',max:15, base:8000, growth:1.40, zero:'Tanks compute faster and shed heat better. 12% a level.',
+             desc:l=>`Tanks compute ${pct(0.12*l)} faster and shed heat ${pct(0.1*l)} better.`},
+  optics:   {name:'Fibre optics',     max:15, base:16000,growth:1.42, zero:'Spines drive their row and column harder. 12% a level.',
+             desc:l=>`Spines reach their row and column ${pct(0.12*l)} harder.`},
+  recovery: {name:'Heat recovery',    max:15, base:40000,growth:1.44, zero:'Sell recovered heat for more than it is worth now. 25% a level.',
+             desc:l=>`Exchangers sell recovered heat for ${pct(0.25*l)} more.`}
 };
 
 const AUTO = {
@@ -484,7 +651,12 @@ const HARD = {
   gpu: {name:'GPU pods',     cost:4500,  desc:'Unlocks the GPU pod: 4.4x the compute of a rack, and 3x the heat.'},
   ups: {name:'UPS bank',     cost:9000,  desc:'Unlocks the UPS: capacity that holds through a power surge.'},
   crac:{name:'CRAC plant',   cost:22000, desc:'Unlocks the CRAC: hall-wide cooling far past a chiller.'},
-  asic:{name:'ASIC fab',     cost:90000, desc:'Unlocks the ASIC bay: fifteen racks of compute in one tile.'}
+  asic:{name:'ASIC fab',     cost:90000,   desc:'Unlocks the ASIC bay: fifteen racks of compute in one tile.'},
+  tank:{name:'Immersion loop',cost:150000,  desc:'Unlocks the Tank: heavy compute that barely raises the temperature.'},
+  solar:{name:'Solar field', cost:260000,   desc:'Unlocks Solar: silent capacity that costs nothing to run.'},
+  spine:{name:'Spine fabric',cost:600000,   desc:'Unlocks the Spine: a switch that reaches a whole row and column.'},
+  heatx:{name:'Heat recovery',cost:1500000, desc:'Unlocks the Exchanger: turns the heat you are fighting into income.'},
+  quantum:{name:'Q-lab',     cost:9000000,  desc:'Unlocks the Q-core: sixty racks of compute in a single tile.'}
 };
 
 /* Renown is kept through a rebirth; everything else is not. */
@@ -512,11 +684,12 @@ function renownFor(earned){ return earned<REBIRTH_MIN?0:Math.floor(12*Math.pow(e
 const S = {
   cash:40, tool:'rack', earned:0, botT:0, savedAt:Date.now(), hall:0,
   renown:0, lifetime:0, runs:0, surge:0, surgeT:0,
-  counts:{rack:0,fan:0,gen:0,ac:0,batt:0,sw:0,gpu:0,ups:0,crac:0,asic:0},
+  counts:{},
   up:{}, auto:{}, hard:{}, perks:{},
   flags:{},
   halls:HALLS.map((h,i)=>({open:i===0?1:0, rows:h.start, tiles:[], grid:null, warn:0}))
 };
+for(const k in MACH) S.counts[k]=0;
 for(const k in UPG)  S.up[k]=0;
 for(const k in AUTO) S.auto[k]=0;
 for(const k in HARD) S.hard[k]=0;
@@ -525,7 +698,7 @@ HALLS.forEach((h,hi)=>{
   const hs=S.halls[hi];
   for(let y=0;y<h.rows;y++) for(let x=0;x<h.cols;x++)
     hs.tiles.push({h:hi,x,y,i:y*h.cols+x,type:null,heat:0,buf:0,fault:0,rep:0,
-                   dust:0,leak:0,fanned:0,wired:0,el:null,art:null});
+                   dust:0,leak:0,fanned:0,wired:0,spined:0,el:null,art:null});
 });
 /* Flat list of every tile in an open hall — the sim walks this every frame. */
 let live=[];
@@ -544,7 +717,8 @@ function money(n){
   while(n>=1000&&i<u.length-1){n/=1000;i++;}
   return '$'+(n<10?n.toFixed(2):n<100?n.toFixed(1):Math.floor(n))+u[i];
 }
-const costOf=(k,n)=>Math.floor(MACH[k].base*Math.pow(MACH[k].growth,n===undefined?S.counts[k]:n));
+const buyMult   =()=>Math.pow(0.96,S.up.logistics);
+const costOf=(k,n)=>Math.floor(MACH[k].base*Math.pow(MACH[k].growth,n===undefined?S.counts[k]:n)*buyMult());
 const upCost=(t,k,l)=>Math.floor(t[k].base*Math.pow(t[k].growth,l));
 const rateMult   =()=>1+0.22*S.up.density;
 const price      =()=>(1+0.6*S.up.bandwidth)*(1+0.09*S.up.contracts)*(1+0.15*S.perks.yield);
@@ -556,6 +730,11 @@ const capMult    =()=>1+0.09*S.up.surge;
 const tapBonus   =()=>1+0.16*S.up.override;
 const faultMult  =()=>Math.pow(0.78,S.auto.shield);
 const meshMult   =()=>1+0.14*S.up.mesh;
+const opticMult  =()=>1+0.12*S.up.optics;
+const tankRate   =()=>1+0.12*S.up.immersion;
+const tankCool   =()=>1+0.1*S.up.immersion;
+const recoverMult=()=>1+0.25*S.up.recovery;
+const offlineCap =()=>(8+2*S.up.telemetry)*3600;
 const dustRate   =()=>0.0055*Math.pow(0.88,S.up.filters);
 const leakChance =()=>0.0042*Math.pow(0.82,S.up.seals);
 const surgeMult  =()=>1+0.6*Math.pow(0.88,S.up.conditioner);
@@ -567,6 +746,12 @@ const $          =id=>document.getElementById(id);
 function setText(el,v){ if(el._t!==v){ el._t=v; el.textContent=v; } }
 function setStyle(el,prop,v){ const k='_s'+prop; if(el[k]!==v){ el[k]=v; el.style[prop]=v; } }
 
+/* Adjacency multipliers a compute tile enjoys: switches next door, spines on
+   its row or column, and the tank's own immersion bonus. */
+function boostOf(t){
+  return (1 + t.wired*MACH.sw.boost*meshMult() + t.spined*MACH.spine.row*opticMult())
+       * (t.type==='tank'?tankRate():1);
+}
 const canOpenRow = hi => S.halls[hi].rows < HALLS[hi].rows;
 const rowCostOf  = hi => HALLS[hi].rowCost[S.halls[hi].rows]||0;
 const nextHall   = () => S.halls.findIndex(h=>!h.open);
@@ -595,6 +780,12 @@ function recomputeAdj(hi){
     }
     t.fanned=f; t.wired=w;
   }
+  /* A spine reaches its whole row and column, so tally the lines once rather
+     than scanning the grid per tile. */
+  const H=HALLS[hi], tiles=S.halls[hi].tiles;
+  const rows=new Array(H.rows).fill(0), cols=new Array(H.cols).fill(0);
+  for(const t of tiles) if(t.type==='spine'){ rows[t.y]++; cols[t.x]++; }
+  for(const t of tiles) t.spined=rows[t.y]+cols[t.x];
 }
 
 /* Power is site-wide, and both the live sim and the offline catch-up need it. */
@@ -684,12 +875,12 @@ function load(){
 }
 function offlineEarnings(savedAt){
   if(!Number.isFinite(savedAt)||savedAt<=0) return 0;
-  const secs=Math.min(Math.max(0,(Date.now()-savedAt)/1000), 8*3600);
+  const secs=Math.min(Math.max(0,(Date.now()-savedAt)/1000), offlineCap());
   if(secs<60) return 0;
   const eff=Math.min(1,0.35+0.13*S.auto.night), brown=powerState().brown;
   let out=0;
   for(const t of live) if(isCompute(t)&&t.fault===0&&unlocked(t))
-    out += MACH[t.type].rate*rateMult()*(1+t.wired*MACH.sw.boost*meshMult())*price()*secs*eff*brown;
+    out += MACH[t.type].rate*rateMult()*boostOf(t)*price()*secs*eff*brown;
   return out;
 }
 
@@ -726,7 +917,7 @@ function doRebirth(){
 const floorEl=$('floor'), stageEl=document.querySelector('.stage');
 const ghost1=document.querySelector('.ghost.g1'), ghost2=document.querySelector('.ghost.g2');
 const TILE_HTML='<div class="heatveil"></div><div class="dustveil"></div>'
-  +'<i class="cov cool"></i><i class="cov wire"></i>'
+  +'<i class="cov spine"></i><i class="cov cool"></i><i class="cov wire"></i>'
   +'<span class="plus">+</span><span class="lockg"></span>'
   +'<span class="warnpip">!</span><span class="leakpip">💧</span><span class="dustpip">✦</span>';
 function buildHall(hi){
@@ -768,7 +959,9 @@ function switchHall(hi){
 function sizeFloor(){
   const H=HALLS[S.hall];
   const w=stageEl.clientWidth-30, h=stageEl.clientHeight-30;
-  const s=Math.max(40,Math.min(Math.floor((w-9*(H.cols-1))/H.cols),Math.floor((h-9*(H.rows-1))/H.rows),112));
+  /* A desktop has the room for a bigger board; a phone does not. */
+  const cap=wideQ.matches?150:112;
+  const s=Math.max(40,Math.min(Math.floor((w-9*(H.cols-1))/H.cols),Math.floor((h-9*(H.rows-1))/H.rows),cap));
   document.documentElement.style.setProperty('--ts',s+'px');
 }
 addEventListener('resize',sizeFloor);
@@ -779,7 +972,9 @@ function paint(t){
   el.className='tile'+(unlocked(t)?'':' locked')+(t.type?' machine':' empty');
   const old=el.querySelector('svg'); if(old) old.remove();
   el.querySelector('.lockg').textContent = unlocked(t)?'':'🔒';
-  el.setAttribute('aria-label', !unlocked(t)?'Locked tile' : t.type?MACH[t.type].name : 'Empty tile');
+  const label = !unlocked(t)?'Locked tile' : t.type?MACH[t.type].name : 'Empty tile';
+  el.setAttribute('aria-label',label);
+  el.title = t.type ? MACH[t.type].name+' — '+MACH[t.type].desc : label;
   t.artQ=-1; t.artL=-1; t._veil=null; t._dveil=null;
   if(!t.type){ t.art=null; t.bar=null; t.leds=null; return; }
   el.insertAdjacentHTML('beforeend', ART[t.type]({f:0,l:0}));
@@ -825,6 +1020,7 @@ function buildHalls(){
 }
 function paintHalls(){
   const nx=nextHall(), n=openHalls();
+  hallsEl.dataset.n=n;
   /* Stay out of the way until a second hall is either owned or within reach. */
   hallsEl.classList.toggle('on', n>1 || (nx>=0 && S.cash>=HALLS[nx].cost*0.25));
   for(const b of hallsEl.children){
@@ -852,6 +1048,7 @@ function tapTile(t){
   if(isCompute(t)&&t.buf>0.05){ collect(t,true); return; }
   if(t.type==='fan'){ flash(t,'coolflash'); float(t,'Cools these'); return; }
   if(t.type==='sw'){ flash(t,'wireflash'); float(t,'Feeds these'); return; }
+  if(t.type==='spine'){ flashLine(t); float(t,'Feeds this row and column'); return; }
   if(t.type){ float(t,MACH[t.type].name); return; }
   place(t,S.tool);
 }
@@ -860,6 +1057,14 @@ function flash(t,cls){
     if(!unlocked(n)||!n.el) continue;
     n.el.classList.add(cls);
     setTimeout(()=>n.el.classList.remove(cls),900);
+  }
+}
+function flashLine(t){
+  for(const n of S.halls[t.h].tiles){
+    if(n===t||(n.x!==t.x&&n.y!==t.y)) continue;
+    if(!unlocked(n)||!n.el) continue;
+    n.el.classList.add('spineflash');
+    setTimeout(()=>n.el.classList.remove('spineflash'),900);
   }
 }
 /* Placement would be permanent otherwise: a misplaced chiller used to be a dead
@@ -905,6 +1110,8 @@ function place(t,k){
   if(k==='rack'&&S.counts.rack===1) toast('Wait for it to fill, then tap to sell.');
   if(k==='fan'&&S.counts.fan===1) toast('The blue outline is what it cools.');
   if(k==='sw'&&S.counts.sw===1) toast('The green outline is what it speeds up.');
+  if(k==='spine'&&S.counts.spine===1) toast('A spine lights its whole row and column.');
+  if(k==='heatx'&&S.counts.heatx===1) toast('An exchanger earns more the hotter its hall runs.');
 }
 function collect(t,manual){
   const v=t.buf*price()*(manual?tapBonus():1);
@@ -982,10 +1189,17 @@ function tick(now){
   const gcool=S.halls.map(()=>0);
   for(const hs of S.halls) hs.warn=0;
   for(const t of live)
-    if((t.type==='ac'||t.type==='crac')&&!t.leak) gcool[t.h]+=MACH[t.type].global*coolMult();
+    if((t.type==='ac'||t.type==='crac'||t.type==='heatx')&&!t.leak)
+      gcool[t.h]+=MACH[t.type].global*coolMult();
 
-  let hottest=0, anyFault=false, anyLeak=false, anyDust=false, income=0;
-  const bmax=bufMax(), dr=dustRate(), lc=leakChance(), mesh=meshMult();
+  let hottest=0, anyFault=0, anyLeak=0, anyDust=0, nMach=0, income=0;
+  /* Exchangers are paid out of the heat they pull from their own hall, so the
+     hall's average machine temperature has to be known before they are billed. */
+  const heatSum=S.halls.map(()=>0), heatN=S.halls.map(()=>0), xchg=S.halls.map(()=>0);
+  for(const t of live){ if(!t.type) continue;
+    heatSum[t.h]+=t.heat; heatN[t.h]++;
+    if(t.type==='heatx'&&!t.leak) xchg[t.h]++; }
+  const bmax=bufMax(), dr=dustRate(), lc=leakChance();
   const crew=0.022*S.auto.crew, failover=Math.min(0.5,0.06*S.auto.failover);
   for(const t of live){
     if(!t.type){ t.heat=Math.max(0,t.heat-(1.2+0.3*S.up.ambient)*dt); continue; }
@@ -994,7 +1208,8 @@ function tick(now){
     /* Dust settles on everything and chokes that tile's cooling. */
     t.dust=Math.min(1,t.dust+dr*dt);
     if(crew>0) t.dust=Math.max(0,t.dust-crew*dt);
-    if(t.dust>=DUSTY) anyDust=true;
+    if(t.dust>=DUSTY) anyDust++;
+    nMach++;
 
     /* Coolant lines burst; a leaking cooler cools nothing until it is sealed. */
     if(isCooler(t)&&!t.leak&&Math.random()<lc*dt){
@@ -1002,7 +1217,7 @@ function tick(now){
       once('leak','A coolant line burst. Tap the dripping tile to seal it.');
     }
     if(t.leak){
-      anyLeak=true; S.halls[t.h].warn=1;
+      anyLeak++; S.halls[t.h].warn=1;
       if(S.auto.leakbot>0){
         t.rep+=dt;
         if(t.rep>=4.2-0.55*S.auto.leakbot){ t.leak=0; t.rep=0; recomputeAdj(t.h); }
@@ -1013,6 +1228,7 @@ function tick(now){
     let cool=gcool[t.h]*brown+0.55+0.12*S.up.ambient;
     cool+=t.fanned*MACH.fan.cools*coolMult()*brown;
     if(t.type==='fan'&&!t.leak) cool+=MACH.fan.cools*coolMult()*0.5*brown;
+    if(t.type==='tank') cool*=tankCool();
     cool*=1-0.5*t.dust;
 
     const throttle = t.heat<45 ? 1 : Math.max(0.12, 1-(t.heat-45)/52);
@@ -1020,7 +1236,7 @@ function tick(now){
 
     if(isCompute(t)){
       const full=t.buf>=bmax-0.001;
-      const out=m.rate*rateMult()*(1+t.wired*MACH.sw.boost*mesh)*active;
+      const out=m.rate*rateMult()*boostOf(t)*active;
       /* Only count what is actually being banked, so the /s readout stops lying
          about stalled racks. */
       if(!full){ t.buf=Math.min(bmax,t.buf+out*dt); income+=out*price(); }
@@ -1039,7 +1255,7 @@ function tick(now){
       t.fault=1; t.rep=0; once('fault','Overheated. Tap the shaking tile to reboot it.');
     }
     if(t.fault>0){
-      t.heat=Math.max(0,t.heat-5*dt); anyFault=true; S.halls[t.h].warn=1;
+      t.heat=Math.max(0,t.heat-5*dt); anyFault++; S.halls[t.h].warn=1;
       /* Repair time is tracked separately from the fault flag; folding the two
          together made the drone finish a second earlier than the shop promises. */
       if(S.auto.reboot>0){
@@ -1049,6 +1265,15 @@ function tick(now){
     }
     if(t.heat>90) S.halls[t.h].warn=1;
     if(t.heat>hottest) hottest=t.heat;
+  }
+
+  /* An exchanger earns on the heat it is pulling out of its own hall, which is
+     self-limiting: the cooler it makes the hall, the less it is worth. */
+  for(let h=0;h<S.halls.length;h++){
+    if(!xchg[h]||!heatN[h]) continue;
+    const avg=heatSum[h]/heatN[h];
+    const g=xchg[h]*(avg/100)*14*MACH.heatx.recover*recoverMult()*(1+0.09*S.up.contracts);
+    S.cash+=g*dt; S.earned+=g*dt; income+=g;
   }
 
   /* Capacity you are not drawing is worth something once you are tied to the grid. */
@@ -1066,7 +1291,7 @@ function tick(now){
   }
 
   saveT+=dt; if(saveT>5){ saveT=0; save(); }
-  draw_(draw,cap,hottest,brown,anyFault,income,bmax,ps.surging,anyLeak,anyDust);
+  draw_(draw,cap,hottest,brown,anyFault,income,bmax,ps.surging,anyLeak,anyDust,nMach);
   requestAnimationFrame(tick);
 }
 addEventListener('pageshow',startLoop);
@@ -1077,12 +1302,18 @@ const UI={cash:$('cash'),dcash:$('dcash'),drenown:$('drenown'),rate:$('rate'),pb
   pmeter:$('pmeter'),hbar:$('hbar'),hval:$('hval'),hmeter:$('hmeter'),shopbtn:$('shopbtn'),hint:$('hint'),
   rebirthtab:$('rebirthtab')};
 let affordT=0, affordable=false;
-function draw_(draw,cap,hottest,brown,anyFault,income,bmax,surging,anyLeak,anyDust){
+/* Live figures the Site tab reads; it re-renders from here rather than
+   recomputing the whole floor for itself. */
+const STATS={income:0,draw:0,cap:0,hottest:0,machines:0,faults:0,leaks:0,dusty:0};
+function draw_(draw,cap,hottest,brown,anyFault,income,bmax,surging,anyLeak,anyDust,nMach){
+  STATS.income=income; STATS.draw=draw; STATS.cap=cap; STATS.hottest=hottest;
+  STATS.machines=nMach; STATS.faults=anyFault; STATS.leaks=anyLeak; STATS.dusty=anyDust;
   const selling=S.tool===SELL;
   const tool=selling?null:MACH[S.tool];
   const canPlace=!!tool&&!(tool.unlock&&!S.hard[tool.unlock])&&S.cash>=costOf(S.tool);
   floorEl.classList.toggle('fanmode',S.tool==='fan');
   floorEl.classList.toggle('wiremode',S.tool==='sw');
+  floorEl.classList.toggle('spinemode',S.tool==='spine');
   /* Only the hall you are standing in needs its pixels updated. */
   for(const t of S.halls[S.hall].tiles){
     const el=t.el;
@@ -1098,6 +1329,7 @@ function draw_(draw,cap,hottest,brown,anyFault,income,bmax,surging,anyLeak,anyDu
     el.classList.toggle('dirty',!!t.type&&t.dust>=DUSTY);
     el.classList.toggle('cooled',t.fanned>0);
     el.classList.toggle('wired',t.wired>0);
+    el.classList.toggle('spined',t.spined>0);
     el.classList.toggle('sellable',selling&&!!t.type);
     if(isCompute(t)){
       repaintArt(t,bmax);
@@ -1216,6 +1448,7 @@ function renderList(){
   if(tab==='floor')          renderFloorTab();
   else if(tab==='hardware')  renderHardwareTab();
   else if(tab==='rebirth')   renderRebirthTab();
+  else if(tab==='site')      renderSiteTab();
   else                       renderUpgradeTab();
   listEl.scrollTop=keep;
 }
@@ -1281,20 +1514,82 @@ function renderHardwareTab(){
     }));
   }
 }
+/* How many levels a click buys: 1, 10, or as many as the wallet covers. */
+let buyN=1;
+function bulkCost(src,k,lvl,n){
+  let c=0;
+  for(let i=0;i<n&&lvl+i<src[k].max;i++) c+=upCost(src,k,lvl+i);
+  return c;
+}
+function bulkCount(src,k,lvl){
+  const room=src[k].max-lvl;
+  if(room<=0) return 0;
+  if(buyN!=='max') return Math.min(buyN,room);
+  let c=0,n=0;
+  while(n<room){ const step=upCost(src,k,lvl+n); if(c+step>S.cash) break; c+=step; n++; }
+  return Math.max(1,n);          /* show the price of one when none are affordable */
+}
+function multSwitch(){
+  const wrap=document.createElement('div'); wrap.className='mult';
+  for(const [val,label] of [[1,'Buy ×1'],[10,'Buy ×10'],['max','Buy max']]){
+    const b=document.createElement('button'); b.type='button'; b.textContent=label;
+    b.classList.toggle('on',buyN===val);
+    b.addEventListener('click',()=>{ buyN=val; renderList(); });
+    wrap.appendChild(b);
+  }
+  return wrap;
+}
 function renderUpgradeTab(){
   const src=tab==='upgrades'?UPG:AUTO, box=tab==='upgrades'?S.up:S.auto;
+  listEl.appendChild(multSwitch());
   for(const k in src){
     const u=src[k];
     listEl.appendChild(card(upIcon(k),u.name,()=>{
-      const lvl=box[k], maxed=lvl>=u.max, c=maxed?0:upCost(src,k,lvl);
-      return {desc:u.desc(lvl), btn:maxed?'Maxed':money(c), can:!maxed&&S.cash>=c, lvl, flat:maxed};
+      const lvl=box[k], maxed=lvl>=u.max;
+      const n=maxed?0:bulkCount(src,k,lvl), c=maxed?0:bulkCost(src,k,lvl,n);
+      return {desc:(lvl===0&&u.zero)?u.zero:u.desc(lvl),
+              btn:maxed?'Maxed':(n>1?money(c)+' ×'+n:money(c)),
+              can:!maxed&&S.cash>=c, lvl, max:u.max, flat:maxed};
     },()=>{
       const lvl=box[k];
       if(lvl>=u.max) return;
-      const c=upCost(src,k,lvl);
-      if(S.cash<c) return;
-      S.cash-=c; box[k]++; save(); refreshList();
+      const n=bulkCount(src,k,lvl), c=bulkCost(src,k,lvl,n);
+      if(n<1||S.cash<c) return;
+      S.cash-=c; box[k]=Math.min(u.max,lvl+n); save(); refreshList();
     }));
+  }
+}
+function renderSiteTab(){
+  const stat=(label,val,bad)=>{
+    const d=document.createElement('div'); d.className='stat'+(bad?' bad':'');
+    d.innerHTML='<span></span><b></b>';
+    const l=d.firstChild, v=d.lastChild;
+    listItems.push(()=>{ setText(l,label); setText(v,val()); });
+    setText(l,label); setText(v,val());
+    return d;
+  };
+  listEl.appendChild(sechead('Right now'));
+  listEl.appendChild(stat('Income',        ()=>money(STATS.income)+'/s'));
+  listEl.appendChild(stat('Power',         ()=>`${STATS.draw.toFixed(0)} / ${STATS.cap.toFixed(0)} kW`, ()=>false));
+  listEl.appendChild(stat('Hottest tile',  ()=>STATS.hottest.toFixed(0)+'°'));
+  listEl.appendChild(stat('Machines',      ()=>String(STATS.machines)));
+  listEl.appendChild(sechead('Trouble'));
+  listEl.appendChild(stat('Faulted',       ()=>String(STATS.faults)));
+  listEl.appendChild(stat('Leaking',       ()=>String(STATS.leaks)));
+  listEl.appendChild(stat('Needs a wipe',  ()=>String(STATS.dusty)));
+  listEl.appendChild(sechead('Halls'));
+  S.halls.forEach((hs,i)=>{
+    if(!hs.open) return;
+    listEl.appendChild(stat(HALLS[i].name,
+      ()=>{const n=machinesIn(i);
+           return `${n} ${n===1?'machine':'machines'} · ${hs.rows}/${HALLS[i].rows} rows`;}));
+  });
+  listEl.appendChild(sechead('This run'));
+  listEl.appendChild(stat('Earned',        ()=>money(S.earned)));
+  listEl.appendChild(stat('Worth on rebirth',()=>'★'+renownFor(S.earned)));
+  if(S.runs>0){
+    listEl.appendChild(stat('Rebirths',    ()=>String(S.runs)));
+    listEl.appendChild(stat('Earned before',()=>money(S.lifetime)));
   }
 }
 function renderRebirthTab(){
@@ -1325,8 +1620,11 @@ function renderRebirthTab(){
     }));
   }
 }
+const wideQ = window.matchMedia('(min-width:1000px)');
+/* On a wide screen the shop is a permanent column, so "open" is not the test. */
+function shopVisible(){ return wideQ.matches || drawer.classList.contains('open'); }
 function refreshList(){
-  if(!drawer.classList.contains('open')) return;
+  if(!shopVisible()) return;
   for(const up of listItems) up();
 }
 function sechead(txt){
@@ -1347,8 +1645,9 @@ function card(ic,title,state,onBuy){
   const el=document.createElement('div'); el.className='card';
   el.innerHTML=`<div class="ic">${ic}</div><div class="mid">
     <div class="t"><span class="tt"></span></div>
-    <div class="d"></div></div>`;
+    <div class="d"></div><div class="lvbar"><i></i></div></div>`;
   const titleEl=el.querySelector('.t'), descEl=el.querySelector('.d');
+  const barEl=el.querySelector('.lvbar'), barFill=barEl.firstChild;
   setText(el.querySelector('.tt'),title);
   const lvEl=document.createElement('span'); lvEl.className='lv';
   const b=document.createElement('button'); b.className='buy'; b.type='button';
@@ -1362,6 +1661,8 @@ function card(ic,title,state,onBuy){
     b.classList.toggle('max',!!st.flat);
     if(st.lvl){ setText(lvEl,'Lv '+st.lvl); if(!lvEl.parentNode) titleEl.appendChild(lvEl); }
     else if(lvEl.parentNode) lvEl.remove();
+    if(st.max){ barEl.classList.add('on'); setStyle(barFill,'width',(st.lvl/st.max*100).toFixed(1)+'%'); }
+    else barEl.classList.remove('on');
   };
   update(); listItems.push(update);
   return el;
@@ -1386,12 +1687,42 @@ addEventListener('visibilitychange',()=>{
 });
 addEventListener('pagehide',save);
 
+/* Keyboard control, mostly for the desktop layout. */
+const TOOLKEYS=Object.keys(MACH);
+addEventListener('keydown',e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey) return;
+  const k=e.key;
+  if(k>='1'&&k<='9'){ const t=TOOLKEYS[+k-1]; if(t) pickTool(t); return; }
+  if(k==='0'){ const t=TOOLKEYS[9]; if(t) pickTool(t); return; }
+  if(k==='s'||k==='S'){ S.tool=S.tool===SELL?'rack':SELL; paintTray(); save(); return; }
+  if(k==='b'||k==='B'){ shopVisible()&&!wideQ.matches?closeDrawer():openDrawer(); return; }
+  if(k==='Escape'){ closeDrawer(); return; }
+  if(k==='['||k===']'){
+    const open=S.halls.map((h,i)=>h.open?i:-1).filter(i=>i>=0);
+    const at=open.indexOf(S.hall);
+    const to=open[(at+(k===']'?1:open.length-1))%open.length];
+    if(to!==undefined) switchHall(to);
+  }
+});
+function pickTool(k){
+  const m=MACH[k];
+  if(m.unlock&&!S.hard[m.unlock]){ openDrawer('hardware'); return; }
+  S.tool=k; paintTray(); save();
+}
+/* Re-measure and re-render when crossing the desktop breakpoint. */
+(wideQ.addEventListener?wideQ.addEventListener.bind(wideQ,'change'):wideQ.addListener.bind(wideQ))(()=>{
+  sizeFloor(); renderList();
+});
+
 const savedAt=load();
 rebuildLive();
 S.halls.forEach((hs,i)=>{ if(hs.open){ buildHall(i); recomputeAdj(i); } });
 buildTray(); buildHalls();
 S.halls[S.hall].tiles.forEach(paint);
 paintTray(); sizeFloor();
+/* The desktop shop is always on screen, so it needs content before it is opened. */
+renderList();
+$('kbd').textContent='1–0 tools · S sell · B shop · [ ] halls';
 $('savenote').textContent = store.ok
   ? 'Progress saves to this browser automatically.'
   : 'Saving is off here. Open the file in Safari to keep progress.';
