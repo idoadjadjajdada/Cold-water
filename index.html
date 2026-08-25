@@ -67,15 +67,37 @@
   @keyframes blip{50%{opacity:.2;}}
 
   /* ---------- floor ---------- */
-  main{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative;}
-  #floor{display:grid;gap:9px;padding:15px;border-radius:28px;position:relative;
+  main{flex:1;min-height:0;display:flex;flex-direction:column;gap:7px;}
+  .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative;}
+  #floor{position:relative;}
+  .hallgrid{display:none;gap:9px;padding:15px;border-radius:28px;position:relative;z-index:1;
     background:
       repeating-linear-gradient(0deg, rgba(0,0,0,.10) 0 1px, transparent 1px 26px),
       repeating-linear-gradient(90deg, rgba(0,0,0,.10) 0 1px, transparent 1px 26px),
       linear-gradient(175deg,var(--floor),var(--floor2));
     box-shadow:inset 0 3px 0 rgba(255,255,255,.1), inset 0 -10px 24px rgba(0,0,0,.25), 0 22px 45px rgba(0,0,0,.4);}
-  #floor::after{content:'';position:absolute;inset:0;border-radius:28px;pointer-events:none;
+  .hallgrid.on{display:grid;animation:hallin .24s ease-out;}
+  @keyframes hallin{from{transform:translateX(14px) scale(.97);opacity:0;}}
+  .hallgrid::after{content:'';position:absolute;inset:0;border-radius:28px;pointer-events:none;
     box-shadow:inset 0 0 60px rgba(0,0,0,.28);}
+
+  /* the halls you are not standing in, stacked behind the one you are */
+  .ghost{position:absolute;inset:0;border-radius:28px;pointer-events:none;opacity:0;z-index:0;
+    background:linear-gradient(175deg,var(--floor),var(--floor2));
+    box-shadow:0 16px 32px rgba(0,0,0,.34), inset 0 2px 0 rgba(255,255,255,.06);
+    transition:opacity .25s;}
+  .ghost.g1{transform:translate(18px,16px) scale(.955);}
+  .ghost.g2{transform:translate(33px,29px) scale(.915);}
+  .ghost.g1.on{opacity:.62;} .ghost.g2.on{opacity:.33;}
+
+  .halls{flex:0 0 auto;display:none;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;}
+  .halls.on{display:flex;}
+  .hallchip{background:rgba(0,0,0,.3);border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:600;opacity:.62;
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.07);display:flex;align-items:center;gap:6px;}
+  .hallchip.on{background:var(--paper);color:var(--ink);opacity:1;}
+  .hallchip .pip{width:8px;height:8px;border-radius:99px;background:var(--danger);display:none;}
+  .hallchip.alert .pip{display:block;animation:blip 1.1s infinite;}
+  .hallchip.add{color:var(--mint);}
 
   .tile{position:relative;border-radius:var(--r);background:linear-gradient(180deg,#514595,#453B80);
     box-shadow:inset 0 -4px 0 rgba(0,0,0,.28), inset 0 3px 0 rgba(255,255,255,.1);
@@ -102,6 +124,14 @@
   .warnpip{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:99px;background:var(--danger);
     color:#fff;font-size:14px;font-weight:700;display:none;align-items:center;justify-content:center;box-shadow:0 3px 0 rgba(0,0,0,.3);}
   .tile.fault .warnpip{display:flex;}
+  /* which tiles a fan actually reaches, so range is visible before you commit */
+  .tile.cooled::after{content:'';position:absolute;inset:0;border-radius:var(--r);pointer-events:none;
+    box-shadow:inset 0 0 0 2px rgba(143,196,255,.28);transition:box-shadow .2s;}
+  #floor.fanmode .tile.cooled::after{box-shadow:inset 0 0 0 2px rgba(143,196,255,.9), inset 0 0 16px rgba(143,196,255,.34);}
+  .tile.coolflash::after{content:'';position:absolute;inset:0;border-radius:var(--r);pointer-events:none;
+    box-shadow:inset 0 0 0 3px var(--sky), inset 0 0 20px rgba(143,196,255,.5);}
+  .tile.sellable::before{content:'';position:absolute;inset:-3px;border-radius:calc(var(--r) + 3px);
+    box-shadow:0 0 0 2px rgba(255,92,122,.8);pointer-events:none;}
   .tile.selling{transform:scale(.88);}
   .tile.selling::before{content:'';position:absolute;inset:-3px;border-radius:calc(var(--r) + 3px);
     box-shadow:0 0 0 3px var(--danger),0 0 22px rgba(255,92,122,.5);pointer-events:none;animation:sellring .44s linear forwards;}
@@ -131,6 +161,9 @@
   .tool.broke{opacity:.42;}
   .tool.lock{opacity:.5;}
   .tool.lock .c{color:var(--lilac);font-size:11px;}
+  .tool.sellbtn{flex:0 0 auto;min-width:54px;}
+  .tool.sellbtn.sel{background:var(--danger);color:#fff;box-shadow:0 0 0 3px rgba(255,92,122,.35);}
+  .tool.sellbtn.sel .c{color:#fff;opacity:.85;}
 
   /* ---------- drawer ---------- */
   #scrim{position:fixed;inset:0;background:rgba(9,5,26,.6);opacity:0;pointer-events:none;transition:opacity .22s;z-index:8;cursor:pointer;}
@@ -208,7 +241,12 @@
     </div>
     <button class="shopbtn" id="shopbtn"><span>Shop</span><span class="dot"></span></button>
   </header>
-  <main><div id="floor"></div></main>
+  <main>
+    <div class="halls" id="halls"></div>
+    <div class="stage"><div id="floor">
+      <div class="ghost g2"></div><div class="ghost g1"></div>
+    </div></div>
+  </main>
   <div class="hint" id="hint" aria-live="polite"></div>
   <div class="tray" id="tray"></div>
 </div>
@@ -308,13 +346,20 @@ const ART = {
 const ICON = k => ART[k]({f:0.6,l:2}).replace('class="art"','');
 
 /* ================= config ================= */
-const COLS=6, ROWS=5, START_ROWS=2;
+/* Each hall is a floor of its own. Cash, upgrades and power are site-wide;
+   heat, fan coverage and chillers are local to the hall the hardware sits in. */
+const HALLS = [
+  {name:'Hall A', cols:6, rows:5, start:2, cost:0,       rowCost:[0,0,600,3500,18000]},
+  {name:'Hall B', cols:6, rows:6, start:2, cost:60000,   rowCost:[0,0,9000,22000,50000,110000]},
+  {name:'Hall C', cols:7, rows:6, start:2, cost:2500000, rowCost:[0,0,320000,700000,1500000,3200000]}
+];
+const SELL='sell';
 
 const MACH = {
   rack:{ name:'Rack',    base:20,  growth:1.17, draw:3,  heat:3.4, rate:1,   desc:'Computes. Tap to sell what it holds.' },
-  fan:{  name:'Fan',     base:45,  growth:1.22, draw:1,  cools:2.6,          desc:'Cools its four neighbours.' },
-  gen:{  name:'Genset',  base:70,  growth:1.20, draw:0,  cap:15, heat:0.9,   desc:'+15 kW capacity. Runs warm.' },
-  ac:{   name:'Chiller', base:260, growth:1.28, draw:4,  global:0.9,         desc:'Cools every tile on the floor.' },
+  fan:{  name:'Fan',     base:45,  growth:1.22, draw:1,  cools:2.6,          desc:'Cools its four neighbours. Pick it up to see which tiles.' },
+  gen:{  name:'Genset',  base:70,  growth:1.20, draw:0,  cap:15, heat:0.9,   desc:'+15 kW for the whole site. Runs warm.' },
+  ac:{   name:'Chiller', base:260, growth:1.28, draw:4,  global:0.9,         desc:'Cools every tile in its hall.' },
   batt:{ name:'Battery', base:420, growth:1.26, draw:0,  cap:9,  unlock:'batt', desc:'+9 kW, silent and cold.' },
   gpu:{  name:'GPU pod', base:950, growth:1.24, draw:9,  heat:9.5, rate:4.4, unlock:'gpu', desc:'Four racks of compute in one tile. Runs hot.' }
 };
@@ -333,11 +378,11 @@ const UPG = {
 };
 
 const AUTO = {
-  bot:     {name:'Scheduler bot', max:10, base:500,  growth:1.58, desc:l=> l===0?'Collects full racks for you. No tapping.':`Sweeps the floor every ${botPeriod(l).toFixed(1)}s.`},
+  bot:     {name:'Scheduler bot', max:10, base:500,  growth:1.58, desc:l=> l===0?'Collects full racks for you, in every hall. No tapping.':`Sweeps every hall every ${botPeriod(l).toFixed(1)}s.`},
   reboot:  {name:'Repair drone',  max:6,  base:1800, growth:1.66, desc:l=> l===0?'Clears faulted hardware without you.':`Fixes a fault in ${(5-0.7*l).toFixed(1)}s.`},
   shield:  {name:'Fault shielding',max:6, base:2600, growth:1.60, desc:l=> l===0?'Hot hardware faults less often.':`Faults ${pct(1-Math.pow(0.78,l))} rarer.`},
   overflow:{name:'Spill buffer',  max:1,  base:6000, growth:1,    desc:l=> l===0?'Full racks keep earning at quarter rate instead of stalling.':'Full racks never stall.'},
-  night:   {name:'Night crew',    max:5,  base:9000, growth:1.55, desc:l=> l===0?'A closed floor already earns 35% of normal rate. Raise it.':`Earns ${pct(Math.min(1,0.35+0.13*l))} of normal rate while the game is closed.`}
+  night:   {name:'Night crew',    max:5,  base:9000, growth:1.55, desc:l=> l===0?'A closed site already earns 35% of normal rate. Raise it.':`Earns ${pct(Math.min(1,0.35+0.13*l))} of normal rate while the game is closed.`}
 };
 
 const HARD = {
@@ -345,19 +390,27 @@ const HARD = {
   gpu: {name:'GPU pods',     cost:4500,  desc:'Unlocks the GPU pod: 4.4x the compute of a rack, and 3x the heat.'}
 };
 
-const ROW_COST=[0,0,600,3500,18000];
-
 /* ================= state ================= */
 const S = {
-  cash:40, rows:START_ROWS, tool:'rack', earned:0, botT:0, savedAt:Date.now(),
-  tiles:[], counts:{rack:0,fan:0,gen:0,ac:0,batt:0,gpu:0},
+  cash:40, tool:'rack', earned:0, botT:0, savedAt:Date.now(), hall:0,
+  counts:{rack:0,fan:0,gen:0,ac:0,batt:0,gpu:0},
   up:{density:0,bandwidth:0,buffer:0,cooling:0,thermal:0,ambient:0,power:0,surge:0,contracts:0,override:0},
   auto:{bot:0,reboot:0,shield:0,overflow:0,night:0},
   hard:{batt:0,gpu:0},
-  flags:{}
+  flags:{},
+  halls:HALLS.map((h,i)=>({open:i===0?1:0, rows:h.start, tiles:[], grid:null, warn:0}))
 };
-for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)
-  S.tiles.push({x,y,i:y*COLS+x,type:null,heat:0,buf:0,fault:0,rep:0,el:null,art:null});
+HALLS.forEach((h,hi)=>{
+  const hs=S.halls[hi];
+  for(let y=0;y<h.rows;y++) for(let x=0;x<h.cols;x++)
+    hs.tiles.push({h:hi,x,y,i:y*h.cols+x,type:null,heat:0,buf:0,fault:0,rep:0,fanned:0,el:null,art:null});
+});
+/* Flat list of every tile in an open hall — the sim walks this every frame. */
+let live=[];
+function rebuildLive(){
+  live=[];
+  for(const hs of S.halls) if(hs.open) for(const t of hs.tiles) live.push(t);
+}
 
 /* ================= helpers ================= */
 function pct(f){return Math.round(f*100)+'%';}
@@ -380,7 +433,7 @@ const heatMult   =()=>Math.pow(0.93,S.up.thermal);
 const capMult    =()=>1+0.09*S.up.surge;
 const tapBonus   =()=>1+0.16*S.up.override;
 const faultMult  =()=>Math.pow(0.78,S.auto.shield);
-const unlocked   =t=>t.y<S.rows;
+const unlocked   =t=>t.y<S.halls[t.h].rows;
 const isCompute  =t=>t.type==='rack'||t.type==='gpu';
 const REFUND     =0.5;
 const REDUCED    =!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -388,10 +441,35 @@ const $          =id=>document.getElementById(id);
 function setText(el,v){ if(el._t!==v){ el._t=v; el.textContent=v; } }
 function setStyle(el,prop,v){ const k='_s'+prop; if(el[k]!==v){ el[k]=v; el.style[prop]=v; } }
 
-/* Power is needed by both the live sim and the offline catch-up, so it lives here. */
+const canOpenRow = hi => S.halls[hi].rows < HALLS[hi].rows;
+const rowCostOf  = hi => HALLS[hi].rowCost[S.halls[hi].rows]||0;
+const nextHall   = () => S.halls.findIndex(h=>!h.open);
+const openHalls  = () => S.halls.reduce((n,h)=>n+(h.open?1:0),0);
+function machinesIn(hi){ let n=0; for(const t of S.halls[hi].tiles) if(t.type) n++; return n; }
+
+function neighbours(t){
+  const H=HALLS[t.h], tiles=S.halls[t.h].tiles, o=[];
+  for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){
+    const nx=t.x+dx, ny=t.y+dy;
+    if(nx<0||ny<0||nx>=H.cols||ny>=H.rows)continue;
+    o.push(tiles[ny*H.cols+nx]);
+  }
+  return o;
+}
+/* Fan coverage only changes when the floor does, so cache it per tile instead of
+   re-walking neighbours every frame. It doubles as the range highlight. */
+function recomputeFans(hi){
+  for(const t of S.halls[hi].tiles){
+    let n=0;
+    for(const nb of neighbours(t)) if(nb.type==='fan') n++;
+    t.fanned=n;
+  }
+}
+
+/* Power is site-wide, and both the live sim and the offline catch-up need it. */
 function powerState(){
   let draw=0, cap=10;
-  for(const t of S.tiles){ if(!t.type)continue; const m=MACH[t.type];
+  for(const t of live){ if(!t.type)continue; const m=MACH[t.type];
     draw+=(m.draw||0)*drawMult(); cap+=(m.cap||0); }
   cap*=capMult();
   return {draw, cap, brown: draw>cap ? cap/draw : 1};
@@ -409,9 +487,11 @@ function save(){
   if(!store.ok) return;
   S.savedAt=Date.now();
   store.set(JSON.stringify({
-    v:1,cash:S.cash,rows:S.rows,earned:S.earned,savedAt:S.savedAt,tool:S.tool,
-    counts:S.counts,up:S.up,auto:S.auto,hard:S.hard,flags:S.flags,
-    tiles:S.tiles.map(t=>t.type?[t.i,t.type,Math.round(t.heat),+t.buf.toFixed(2),t.fault>0?1:0]:null).filter(Boolean)
+    v:2, cash:S.cash, earned:S.earned, savedAt:S.savedAt, hall:S.hall,
+    tool:S.tool===SELL?'rack':S.tool,   /* never reopen the game holding the sell tool */
+    counts:S.counts, up:S.up, auto:S.auto, hard:S.hard, flags:S.flags,
+    halls:S.halls.map(hs=>({open:hs.open?1:0, rows:hs.rows,
+      tiles:hs.tiles.map(t=>t.type?[t.i,t.type,Math.round(t.heat),+t.buf.toFixed(2),t.fault>0?1:0]:null).filter(Boolean)}))
   }));
 }
 function load(){
@@ -422,25 +502,42 @@ function load(){
     const clamp=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
     S.cash=Math.max(0,num(d.cash,0));
     S.earned=Math.max(0,num(d.earned,0));
-    S.rows=clamp(Math.round(num(d.rows,START_ROWS)),START_ROWS,ROWS);
     if(MACH[d.tool]) S.tool=d.tool;
     Object.assign(S.up,d.up||{}); Object.assign(S.auto,d.auto||{});
     Object.assign(S.hard,d.hard||{}); Object.assign(S.flags,d.flags||{});
     for(const k in UPG)  S.up[k]  =clamp(Math.round(num(S.up[k],0)),  0,UPG[k].max);
     for(const k in AUTO) S.auto[k]=clamp(Math.round(num(S.auto[k],0)),0,AUTO[k].max);
     for(const k in S.hard) S.hard[k]=S.hard[k]?1:0;
-    (d.tiles||[]).forEach(row=>{
-      if(!row) return;
-      const [i,type,heat,buf,fault]=row;
-      const t=S.tiles[i];
-      if(!t||!MACH[type]||!unlocked(t))return;
-      if(MACH[type].unlock&&!S.hard[MACH[type].unlock])return;
-      t.type=type; t.heat=clamp(num(heat,0),0,100); t.buf=Math.max(0,num(buf,0)); t.fault=fault?1:0; t.rep=0;
+
+    /* A v1 save was a single floor. It becomes Hall A. */
+    const halls = Array.isArray(d.halls) ? d.halls
+      : [{open:1, rows:num(d.rows,HALLS[0].start), tiles:d.tiles||[]}];
+
+    halls.forEach((hd,hi)=>{
+      if(!hd||hi>=S.halls.length) return;
+      const H=HALLS[hi], hs=S.halls[hi];
+      hs.open = hi===0 ? 1 : (hd.open?1:0);
+      hs.rows = clamp(Math.round(num(hd.rows,H.start)), H.start, H.rows);
+      if(!hs.open) return;
+      (hd.tiles||[]).forEach(row=>{
+        if(!row) return;
+        const [i,type,heat,buf,fault]=row;
+        const t=hs.tiles[i];
+        if(!t||!MACH[type]||!unlocked(t))return;
+        if(MACH[type].unlock&&!S.hard[MACH[type].unlock])return;
+        t.type=type; t.heat=clamp(num(heat,0),0,100);
+        t.buf=Math.max(0,num(buf,0)); t.fault=fault?1:0; t.rep=0;
+      });
     });
-    /* The tile list is the source of truth: a stale counts map would mis-price everything. */
+    S.hall=clamp(Math.round(num(d.hall,0)),0,S.halls.length-1);
+    if(!S.halls[S.hall].open) S.hall=0;
+
+    /* The tiles are the source of truth: a stale counts map would mis-price everything. */
     for(const k in S.counts) S.counts[k]=0;
-    for(const t of S.tiles) if(t.type) S.counts[t.type]++;
-    for(const t of S.tiles) t.buf=Math.min(t.buf,bufMax());
+    for(const hs of S.halls){
+      if(!hs.open){ for(const t of hs.tiles) t.type=null; continue; }
+      for(const t of hs.tiles){ if(t.type) S.counts[t.type]++; t.buf=Math.min(t.buf,bufMax()); }
+    }
     return d.savedAt||null;
   }catch(e){ return null; }
 }
@@ -450,20 +547,24 @@ function offlineEarnings(savedAt){
   if(secs<60) return 0;
   const eff=Math.min(1,0.35+0.13*S.auto.night), brown=powerState().brown;
   let out=0;
-  for(const t of S.tiles) if(isCompute(t)&&t.fault===0&&unlocked(t))
+  for(const t of live) if(isCompute(t)&&t.fault===0&&unlocked(t))
     out += MACH[t.type].rate*rateMult()*price()*secs*eff*brown;
   return out;
 }
 
 /* ================= floor ================= */
-const floorEl=document.getElementById('floor');
-function buildFloor(){
-  floorEl.style.gridTemplateColumns=`repeat(${COLS}, var(--ts))`;
-  floorEl.style.gridTemplateRows=`repeat(${ROWS}, var(--ts))`;
-  S.tiles.forEach(t=>{
+const floorEl=$('floor'), stageEl=document.querySelector('.stage');
+const ghost1=document.querySelector('.ghost.g1'), ghost2=document.querySelector('.ghost.g2');
+function buildHall(hi){
+  const H=HALLS[hi], hs=S.halls[hi];
+  if(hs.grid) return;
+  const g=document.createElement('div');
+  g.className='hallgrid';
+  g.style.gridTemplateColumns=`repeat(${H.cols}, var(--ts))`;
+  g.style.gridTemplateRows=`repeat(${H.rows}, var(--ts))`;
+  hs.tiles.forEach(t=>{
     const el=document.createElement('button');
-    el.className='tile';
-    el.type='button';
+    el.className='tile'; el.type='button';
     el.innerHTML='<div class="heatveil"></div><span class="plus">+</span><span class="lockg"></span><span class="warnpip">!</span>';
     /* 'click' rather than 'pointerup': a pointerup that began somewhere else
        (a drag, a scroll) must not count as a tap, and buttons get keyboard support free. */
@@ -476,21 +577,30 @@ function buildFloor(){
     el.addEventListener('pointercancel',cancelHold);
     el.addEventListener('pointerleave',cancelHold);
     el.addEventListener('contextmenu',e=>e.preventDefault());
-    t.el=el; t.veil=el.querySelector('.heatveil'); floorEl.appendChild(el);
+    t.el=el; t.veil=el.querySelector('.heatveil'); g.appendChild(el);
   });
-  sizeFloor();
+  hs.grid=g; floorEl.appendChild(g);
+  g.classList.toggle('on',hi===S.hall);
+}
+function switchHall(hi){
+  if(!S.halls[hi]||!S.halls[hi].open||hi===S.hall) return;
+  S.hall=hi;
+  for(let i=0;i<S.halls.length;i++)
+    if(S.halls[i].grid) S.halls[i].grid.classList.toggle('on',i===hi);
+  S.halls[hi].tiles.forEach(paint);
+  sizeFloor(); paintHalls(); save();
 }
 function sizeFloor(){
-  const m=document.querySelector('main');
-  const w=m.clientWidth-30, h=m.clientHeight-30;
-  const s=Math.max(44,Math.min(Math.floor((w-9*(COLS-1))/COLS),Math.floor((h-9*(ROWS-1))/ROWS),112));
+  const H=HALLS[S.hall];
+  const w=stageEl.clientWidth-30, h=stageEl.clientHeight-30;
+  const s=Math.max(40,Math.min(Math.floor((w-9*(H.cols-1))/H.cols),Math.floor((h-9*(H.rows-1))/H.rows),112));
   document.documentElement.style.setProperty('--ts',s+'px');
 }
 addEventListener('resize',sizeFloor);
 addEventListener('orientationchange',()=>setTimeout(sizeFloor,260));
 
 function paint(t){
-  const el=t.el;
+  const el=t.el; if(!el) return;
   el.className='tile'+(unlocked(t)?'':' locked')+(t.type?' machine':' empty');
   const old=el.querySelector('svg'); if(old) old.remove();
   el.querySelector('.lockg').textContent = unlocked(t)?'':'🔒';
@@ -516,21 +626,70 @@ function repaintArt(t,bmax){
   t.artQ=q; t.artL=l;
 }
 
+/* ================= hall switcher ================= */
+const hallsEl=$('halls');
+function buildHalls(){
+  hallsEl.innerHTML='';
+  S.halls.forEach((hs,i)=>{
+    if(!hs.open) return;
+    const b=document.createElement('button');
+    b.type='button'; b.className='hallchip'; b.dataset.h=i;
+    b.innerHTML=`<span>${HALLS[i].name}</span><span class="pip"></span>`;
+    b.addEventListener('click',()=>switchHall(i));
+    hallsEl.appendChild(b);
+  });
+  const nx=nextHall();
+  if(nx>=0){
+    const b=document.createElement('button');
+    b.type='button'; b.className='hallchip add';
+    b.textContent='+ '+HALLS[nx].name;
+    b.addEventListener('click',()=>openDrawer('floor'));
+    hallsEl.appendChild(b);
+  }
+  paintHalls();
+}
+function paintHalls(){
+  const nx=nextHall(), n=openHalls();
+  /* Stay out of the way until a second hall is either owned or within reach. */
+  hallsEl.classList.toggle('on', n>1 || (nx>=0 && S.cash>=HALLS[nx].cost*0.25));
+  for(const b of hallsEl.children){
+    if(b.dataset.h===undefined) continue;
+    const i=+b.dataset.h;
+    b.classList.toggle('on', i===S.hall);
+    b.classList.toggle('alert', !!S.halls[i].warn && i!==S.hall);
+  }
+  ghost1.classList.toggle('on', n>1);
+  ghost2.classList.toggle('on', n>2);
+}
+
 /* ================= interaction ================= */
 function tapTile(t){
   if(!unlocked(t)){ float(t,'Locked in shop'); return; }
+  if(S.tool===SELL){
+    if(t.type) sellTile(t); else float(t,'Nothing to sell');
+    return;
+  }
   if(isCompute(t)){
     if(t.fault>0){ t.fault=0; t.rep=0; t.heat=50; float(t,'Rebooted'); return; }
     if(t.buf>0.05){ collect(t,true); return; }
   }
+  if(t.type==='fan'){ flashCoverage(t); float(t,'Cools these'); return; }
   if(t.type){ float(t,MACH[t.type].name); return; }
   place(t,S.tool);
 }
-/* Placement is permanent otherwise: a misplaced chiller used to be a dead tile forever. */
+function flashCoverage(t){
+  for(const n of neighbours(t)){
+    if(!unlocked(n)||!n.el) continue;
+    n.el.classList.add('coolflash');
+    setTimeout(()=>n.el.classList.remove('coolflash'),900);
+  }
+}
+/* Placement would be permanent otherwise: a misplaced chiller used to be a dead
+   tile forever. Sell mode in the tray does the same thing without the gesture. */
 const hold={el:null,t:null,x:0,y:0,timer:0,ring:0};
 function startHold(t,el,e){
   cancelHold();
-  if(!unlocked(t)||!t.type) return;
+  if(!unlocked(t)||!t.type||S.tool===SELL) return;
   hold.el=el; hold.t=t; hold.x=e.clientX; hold.y=e.clientY;
   hold.ring=setTimeout(()=>{ if(hold.el===el) el.classList.add('selling'); },190);
   hold.timer=setTimeout(()=>{
@@ -554,9 +713,9 @@ function sellTile(t){
   const refund=Math.floor(costOf(k,n)*REFUND);
   S.counts[k]=n; S.cash+=refund;
   t.type=null; t.heat=0; t.buf=0; t.fault=0; t.rep=0;
-  paint(t); paintTray(); save();
+  paint(t); recomputeFans(t.h); paintTray(); save();
   float(t,'Sold +'+money(refund+gain)); sparks(t); bumpWallet();
-  if(!S.flags.sold){ S.flags.sold=1; toast('Sold back for half. Long-press any machine to sell it.'); }
+  if(!S.flags.sold){ S.flags.sold=1; toast('Sold back for half. Long-press works too.'); }
 }
 function place(t,k){
   const m=MACH[k];
@@ -564,8 +723,9 @@ function place(t,k){
   const c=costOf(k);
   if(S.cash<c){ float(t,'Need '+money(c)); return; }
   S.cash-=c; t.type=k; t.heat=0; t.buf=0; t.fault=0; t.rep=0; S.counts[k]++;
-  paint(t); paintTray(); save();
+  paint(t); recomputeFans(t.h); paintTray(); save();
   if(k==='rack'&&S.counts.rack===1) toast('Wait for it to fill, then tap to sell.');
+  if(k==='fan'&&S.counts.fan===1) toast('The blue outline is what it cools.');
 }
 function collect(t,manual){
   const v=t.buf*price()*(manual?tapBonus():1);
@@ -573,11 +733,12 @@ function collect(t,manual){
   float(t,'+'+money(v)); sparks(t); bumpWallet();
 }
 function float(t,txt){
+  if(!t.el) return;
   const f=document.createElement('div'); f.className='float'; f.textContent=txt;
   t.el.appendChild(f); setTimeout(()=>f.remove(),850);
 }
 function sparks(t){
-  if(REDUCED) return;
+  if(REDUCED||!t.el) return;
   for(let i=0;i<5;i++){
     const s=document.createElement('div'); s.className='spark';
     s.style.left='50%'; s.style.top='45%';
@@ -591,13 +752,13 @@ function sparks(t){
 }
 let bumpT;
 function bumpWallet(){
-  const w=document.getElementById('wallet');
+  const w=$('wallet');
   w.classList.remove('bump'); void w.offsetWidth; w.classList.add('bump');
   clearTimeout(bumpT); bumpT=setTimeout(()=>w.classList.remove('bump'),260);
 }
 function toast(msg){
   const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
-  document.getElementById('toasts').appendChild(t);
+  $('toasts').appendChild(t);
   setTimeout(()=>t.remove(),3000);
 }
 function once(flag,msg){ if(S.flags[flag])return; S.flags[flag]=1; toast(msg); }
@@ -620,17 +781,19 @@ function tick(now){
   const ps=powerState(), draw=ps.draw, cap=ps.cap, brown=ps.brown;
   if(brown<1) once('brown','Brownout. Add a genset or a battery.');
 
-  let globalCool=0;
-  for(const t of S.tiles) if(t.type==='ac') globalCool+=MACH.ac.global*coolMult();
+  /* A chiller only cools the hall it stands in. */
+  const gcool=S.halls.map(()=>0);
+  for(const hs of S.halls) hs.warn=0;
+  for(const t of live) if(t.type==='ac') gcool[t.h]+=MACH.ac.global*coolMult();
 
   let hottest=0, anyFault=false, income=0;
   const bmax=bufMax();
-  for(const t of S.tiles){
+  for(const t of live){
     if(!t.type){ t.heat=Math.max(0,t.heat-(1.2+0.3*S.up.ambient)*dt); continue; }
     const m=MACH[t.type];
     /* Cooling is powered too: a brownout should not leave the fans at full tilt. */
-    let cool=globalCool*brown+0.55+0.12*S.up.ambient;
-    for(const n of neighbours(t)) if(n.type==='fan') cool+=MACH.fan.cools*coolMult()*brown;
+    let cool=gcool[t.h]*brown+0.55+0.12*S.up.ambient;
+    cool+=t.fanned*MACH.fan.cools*coolMult()*brown;
     if(t.type==='fan') cool+=MACH.fan.cools*coolMult()*0.5*brown;
 
     const throttle = t.heat<45 ? 1 : Math.max(0.12, 1-(t.heat-45)/52);
@@ -653,7 +816,7 @@ function tick(now){
       t.fault=1; t.rep=0; once('fault','Overheated. Tap the shaking tile to reboot it.');
     }
     if(t.fault>0){
-      t.heat=Math.max(0,t.heat-5*dt); anyFault=true;
+      t.heat=Math.max(0,t.heat-5*dt); anyFault=true; S.halls[t.h].warn=1;
       /* Repair time is tracked separately from the fault flag; folding the two
          together made the drone finish a second earlier than the shop promises. */
       if(S.auto.reboot>0){
@@ -661,6 +824,7 @@ function tick(now){
         if(t.rep>=5-0.7*S.auto.reboot){ t.fault=0; t.rep=0; t.heat=42; }
       }
     }
+    if(t.heat>90) S.halls[t.h].warn=1;
     if(t.heat>hottest) hottest=t.heat;
   }
 
@@ -668,7 +832,7 @@ function tick(now){
     S.botT+=dt;
     if(S.botT>=botPeriod(S.auto.bot)){
       S.botT=0;
-      for(const t of S.tiles) if(isCompute(t)&&t.buf>0.05&&t.fault===0) collectQuiet(t);
+      for(const t of live) if(isCompute(t)&&t.buf>0.05&&t.fault===0) collectQuiet(t);
     }
   }
 
@@ -678,24 +842,18 @@ function tick(now){
 }
 addEventListener('pageshow',startLoop);
 function collectQuiet(t){ const v=t.buf*price(); S.cash+=v; S.earned+=v; t.buf=0; }
-function neighbours(t){
-  const o=[];
-  for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){
-    const nx=t.x+dx,ny=t.y+dy;
-    if(nx<0||ny<0||nx>=COLS||ny>=ROWS)continue;
-    o.push(S.tiles[ny*COLS+nx]);
-  }
-  return o;
-}
 
 /* ================= draw ================= */
 const UI={cash:$('cash'),dcash:$('dcash'),rate:$('rate'),pbar:$('pbar'),pval:$('pval'),pmeter:$('pmeter'),
   hbar:$('hbar'),hval:$('hval'),hmeter:$('hmeter'),shopbtn:$('shopbtn'),hint:$('hint')};
 let affordT=0, affordable=false;
 function draw_(draw,cap,hottest,brown,anyFault,income,bmax){
-  const tool=MACH[S.tool];
-  const canPlace=!(tool.unlock&&!S.hard[tool.unlock])&&S.cash>=costOf(S.tool);
-  for(const t of S.tiles){
+  const selling=S.tool===SELL;
+  const tool=selling?null:MACH[S.tool];
+  const canPlace=!!tool&&!(tool.unlock&&!S.hard[tool.unlock])&&S.cash>=costOf(S.tool);
+  floorEl.classList.toggle('fanmode',S.tool==='fan');
+  /* Only the hall you are standing in needs its pixels updated. */
+  for(const t of S.halls[S.hall].tiles){
     const el=t.el;
     if(!unlocked(t)){ if(!el.classList.contains('locked')) paint(t); continue; }
     if(el.classList.contains('locked')) paint(t);
@@ -703,6 +861,8 @@ function draw_(draw,cap,hottest,brown,anyFault,income,bmax){
     if(t._veil!==veil){ t._veil=veil; t.veil.style.opacity=veil; }
     el.classList.toggle('hot',t.heat>70);
     el.classList.toggle('fault',t.fault>0);
+    el.classList.toggle('cooled',t.fanned>0);
+    el.classList.toggle('sellable',selling&&!!t.type);
     if(isCompute(t)){
       repaintArt(t,bmax);
       el.classList.toggle('ready',t.buf>=bmax*0.999&&t.fault===0);
@@ -724,9 +884,10 @@ function draw_(draw,cap,hottest,brown,anyFault,income,bmax){
   if(--affordT<=0){ affordT=15; affordable=anyAffordable(); }
   UI.shopbtn.classList.toggle('has',affordable);
   setText(UI.hint,hint(brown,anyFault,hottest));
-  paintTray();
+  paintTray(); paintHalls();
 }
 function hint(brown,anyFault,hottest){
+  if(S.tool===SELL) return 'Sell mode: tap a machine to sell it back for half.';
   if(anyFault) return 'A rack faulted. Tap the shaking tile to reboot it.';
   if(brown<1) return 'Brownout — drawing more power than you make. Place a genset.';
   if(S.counts.rack===0) return 'Pick Rack below, then tap an empty tile.';
@@ -734,29 +895,38 @@ function hint(brown,anyFault,hottest){
   if(S.counts.fan===0&&hottest>60) return 'Getting hot. A fan cools its four neighbours.';
   if(S.earned>400&&S.auto.bot===0) return 'Tired of tapping? Buy a scheduler bot.';
   if(S.earned>4000&&!S.hard.gpu) return 'Hardware tab has something faster than racks.';
-  if(S.earned>150&&!S.flags.sold) return 'Put something in the wrong place? Long-press it to sell it back.';
+  const nx=nextHall();
+  if(nx>0&&!canOpenRow(S.hall)&&S.cash>=HALLS[nx].cost*0.5) return `${HALLS[S.hall].name} is full. ${HALLS[nx].name} is in the Floor tab.`;
+  if(S.earned>150&&!S.flags.sold) return 'Put something in the wrong place? Sell it with the Sell tool.';
   return '';
 }
 
 /* ================= tray ================= */
-const trayEl=document.getElementById('tray');
+const trayEl=$('tray');
+const SELL_ICON=`<svg viewBox="0 0 64 64"><path d="M35 7H15a8 8 0 0 0-8 8v20a8 8 0 0 0 2.3 5.7l20 20a8 8 0 0 0 11.4 0l16-16a8 8 0 0 0 0-11.4l-20-20A8 8 0 0 0 35 7z" fill="#FF7A59"/><circle cx="21" cy="21" r="5.5" fill="#FFF1EC"/></svg>`;
 function buildTray(){
   trayEl.innerHTML='';
   for(const k in MACH){
     const b=document.createElement('button');
-    b.className='tool'; b.dataset.k=k;
+    b.className='tool'; b.dataset.k=k; b.type='button';
     b.innerHTML=ICON(k)+`<span class="n">${MACH[k].name}</span><span class="c num"></span>`;
-    b.type='button';
     b.addEventListener('click',()=>{
       const m=MACH[k];
       if(m.unlock&&!S.hard[m.unlock]){ openDrawer('hardware'); return; }
       S.tool=k; paintTray(); save();});
     trayEl.appendChild(b);
   }
+  const b=document.createElement('button');
+  b.className='tool sellbtn'; b.dataset.k=SELL; b.type='button';
+  b.innerHTML=SELL_ICON+`<span class="n">Sell</span><span class="c num">half</span>`;
+  b.addEventListener('click',()=>{ S.tool = S.tool===SELL?'rack':SELL; paintTray(); save(); });
+  trayEl.appendChild(b);
 }
 function paintTray(){
   for(const b of trayEl.children){
-    const k=b.dataset.k,m=MACH[k],lock=!!(m.unlock&&!S.hard[m.unlock]),c=costOf(k);
+    const k=b.dataset.k;
+    if(k===SELL){ b.classList.toggle('sel',S.tool===SELL); continue; }
+    const m=MACH[k],lock=!!(m.unlock&&!S.hard[m.unlock]),c=costOf(k);
     b.classList.toggle('lock',lock);
     setText(b.querySelector('.c'),lock?'Locked':money(c));
     b.classList.toggle('sel',S.tool===k&&!lock);
@@ -765,7 +935,7 @@ function paintTray(){
 }
 
 /* ================= drawer ================= */
-const drawer=document.getElementById('drawer'), scrim=document.getElementById('scrim');
+const drawer=$('drawer'), scrim=$('scrim');
 let tab='upgrades';
 function openDrawer(t){
   if(t){ tab=t; document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.tab===t)); }
@@ -785,11 +955,13 @@ function anyAffordable(){
   for(const k in UPG) if(S.up[k]<UPG[k].max&&S.cash>=upCost(UPG,k,S.up[k])) return true;
   for(const k in AUTO) if(S.auto[k]<AUTO[k].max&&S.cash>=upCost(AUTO,k,S.auto[k])) return true;
   for(const k in HARD) if(!S.hard[k]&&S.cash>=HARD[k].cost) return true;
-  if(S.rows<ROWS&&S.cash>=ROW_COST[S.rows]) return true;
+  if(canOpenRow(S.hall)&&S.cash>=rowCostOf(S.hall)) return true;
+  const nx=nextHall();
+  if(nx>=0&&S.cash>=HALLS[nx].cost) return true;
   return false;
 }
 /* Cards are built once per tab and then refreshed in place. Rebuilding the whole
-   list on a timer threw the scroll position back to the top every 0.9s and swapped
+   list on a timer threw the scroll position back to the top and swapped
    buttons out from under the player's finger. */
 let listItems=[];
 const listEl=$('dlist');
@@ -797,17 +969,41 @@ function renderList(){
   const keep=listEl.scrollTop;
   listItems=[]; listEl.innerHTML='';
   if(tab==='floor'){
-    if(S.rows>=ROWS)
-      listEl.appendChild(card('🏢','Full floor',()=>({desc:'Every slot is open.',btn:'Maxed',flat:true})));
+    const hi=S.hall, H=HALLS[hi];
+    listEl.appendChild(sechead('This hall'));
+    if(!canOpenRow(hi))
+      listEl.appendChild(card('🏢',H.name+' is full',()=>({desc:'Every tile in this hall is open.',btn:'Maxed',flat:true})));
     else
       listEl.appendChild(card('🏗️','Open the next row',()=>{
-        const c=ROW_COST[S.rows];
-        return {desc:`Row ${S.rows+1} adds ${COLS} more tiles to build on.`,btn:money(c),can:S.cash>=c};
+        const c=rowCostOf(hi);
+        return {desc:`Row ${S.halls[hi].rows+1} of ${H.name} adds ${H.cols} more tiles.`,btn:money(c),can:S.cash>=c};
       },()=>{
-        const c=ROW_COST[S.rows];
-        if(S.rows>=ROWS||S.cash<c) return;
-        S.cash-=c; S.rows++; S.tiles.forEach(paint); toast(`Row ${S.rows} open.`); save(); renderList();
+        const c=rowCostOf(hi);
+        if(!canOpenRow(hi)||S.cash<c) return;
+        S.cash-=c; S.halls[hi].rows++;
+        S.halls[hi].tiles.forEach(paint); recomputeFans(hi); sizeFloor();
+        toast(`${H.name} row ${S.halls[hi].rows} open.`); save(); renderList();
       }));
+    listEl.appendChild(sechead('Halls'));
+    S.halls.forEach((hs,i)=>{
+      const H2=HALLS[i];
+      listEl.appendChild(card('🏬',H2.name,()=>{
+        if(!hs.open) return {
+          desc:`Another floor, ${H2.cols} by ${H2.rows}. Your other halls keep running while you are in it.`,
+          btn:money(H2.cost), can:S.cash>=H2.cost};
+        return {desc:`${H2.cols} by ${H2.rows}. ${machinesIn(i)} machines, ${hs.rows} of ${H2.rows} rows open.`,
+                btn:i===S.hall?'You are here':'Go there', can:i!==S.hall, flat:i===S.hall};
+      },()=>{
+        if(hs.open){ if(i!==S.hall){ switchHall(i); closeDrawer(); } return; }
+        if(S.cash<H2.cost) return;
+        S.cash-=H2.cost; hs.open=1;
+        buildHall(i); rebuildLive(); recomputeFans(i); buildHalls();
+        switchHall(i); save();
+        /* Buying a hall moves you into it, so get the drawer out of the way. */
+        closeDrawer();
+        toast(H2.name+' is open. Your other halls keep running.');
+      }));
+    });
     listEl.appendChild(sechead('Danger zone'));
     listEl.appendChild(card('🧨','Wipe save',()=>({desc:'Deletes progress and starts a fresh floor.',btn:'Wipe',can:true}),()=>{
       if(confirm('Delete your save and start over?')){ store.clear(); location.reload(); }
@@ -909,7 +1105,11 @@ addEventListener('visibilitychange',()=>{
 addEventListener('pagehide',save);
 
 const savedAt=load();
-buildFloor(); buildTray(); S.tiles.forEach(paint); paintTray();
+rebuildLive();
+S.halls.forEach((hs,i)=>{ if(hs.open){ buildHall(i); recomputeFans(i); } });
+buildTray(); buildHalls();
+S.halls[S.hall].tiles.forEach(paint);
+paintTray(); sizeFloor();
 $('savenote').textContent = store.ok
   ? 'Progress saves to this browser automatically.'
   : 'Saving is off here. Open the file in Safari to keep progress.';
@@ -918,7 +1118,7 @@ const gained=offlineEarnings(savedAt);
 if(gained>1){
   const mins=Math.round(Math.min((Date.now()-savedAt)/60000,480));
   const plural=(n,w)=>n+' '+w+(n===1?'':'s');
-  $('mbody').textContent=`Your floor kept running for ${mins<60?plural(mins,'minute'):plural(Math.round(mins/60),'hour')}.`;
+  $('mbody').textContent=`Your site kept running for ${mins<60?plural(mins,'minute'):plural(Math.round(mins/60),'hour')}.`;
   $('mbig').textContent=money(gained);
   $('modal').classList.add('open');
   $('mok').addEventListener('click',()=>{
