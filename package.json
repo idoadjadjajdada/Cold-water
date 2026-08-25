@@ -1,0 +1,13 @@
+{
+  "name": "coldwater",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A datacenter idle game in one HTML file.",
+  "scripts": {
+    "test": "tests/run.sh",
+    "setup": "playwright install chromium"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}
