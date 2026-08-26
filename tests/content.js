@@ -32,7 +32,7 @@ const base=extra=>Object.assign({v:3,cash:1000,earned:1000,tool:'rack',hall:0,
   console.log('\n--- new hardware ---');
   let {p,ctx,errs}=await seed(b,base({cash:5e5,hard:{batt:1,gpu:1,ups:1,crac:1,asic:1}}));
   ok('no exception', errs.length===0, errs.join('|'));
-  ok('15 machines + Sell in the tray', await p.locator('.tool').count()===16,
+  ok('21 machines + Sell in the tray', await p.locator('.tool').count()===22,
      String(await p.locator('.tool').count()));
   for(const k of ['sw','ups','crac','asic'])
     ok(`${k} tool present and unlocked`, await p.locator(`.tool[data-k="${k}"]`).count()===1
@@ -126,11 +126,11 @@ const base=extra=>Object.assign({v:3,cash:1000,earned:1000,tool:'rack',hall:0,
   console.log('\n--- new upgrades present ---');
   ({p,ctx,errs}=await seed(b,base({cash:1e6})));
   await p.locator('#shopbtn').click(); await p.waitForTimeout(300);
-  ok('upgrades tab lists 20', await p.locator('.card').count()===20, String(await p.locator('.card').count()));
+  ok('upgrades tab lists 23', await p.locator('.card').count()===23, String(await p.locator('.card').count()));
   await p.locator('.tab[data-tab="automate"]').click(); await p.waitForTimeout(200);
   ok('automate tab lists 9', await p.locator('.card').count()===9, String(await p.locator('.card').count()));
   await p.locator('.tab[data-tab="hardware"]').click(); await p.waitForTimeout(200);
-  ok('hardware tab lists 10 unlocks + 15 machines', await p.locator('.card').count()===25,
+  ok('hardware tab lists 16 unlocks + 21 machines', await p.locator('.card').count()===37,
      String(await p.locator('.card').count()));
   await ctx.close();
 

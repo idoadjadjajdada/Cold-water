@@ -171,6 +171,20 @@
   .cov{position:absolute;pointer-events:none;opacity:0;transition:opacity .2s, box-shadow .2s;}
   .cov.cool{inset:0;border-radius:var(--r);box-shadow:inset 0 0 0 2px rgba(143,196,255,.32);}
   .cov.wire{inset:5px;border-radius:calc(var(--r) - 4px);box-shadow:inset 0 0 0 2px rgba(70,199,164,.38);}
+  /* The sideways families preview only while their tool is held, so they never
+     compete with the cooling and switch rings for the same tile. */
+  /* A soft tint vanishes against a violet board, so these preview as rings. */
+  .cov.aux{inset:0;border-radius:var(--r);}
+  #floor.caremode   .tile.cared  .cov.aux{opacity:1;
+    box-shadow:inset 0 0 0 3px rgba(124,224,195,.95), inset 0 0 18px rgba(124,224,195,.4);}
+  #floor.storemode  .tile.stored .cov.aux{opacity:1;
+    box-shadow:inset 0 0 0 3px rgba(199,168,255,1), inset 0 0 18px rgba(199,168,255,.45);}
+  #floor.marketmode .tile.markd  .cov.aux{opacity:1;
+    box-shadow:inset 0 0 0 3px rgba(255,209,102,1), inset 0 0 18px rgba(255,209,102,.4);}
+  .tile.auxflash .cov.aux{opacity:1;
+    box-shadow:inset 0 0 0 3px rgba(255,255,255,.95), inset 0 0 20px rgba(255,255,255,.5);}
+  .traysep{flex:0 0 auto;width:1px;align-self:stretch;margin:8px 1px;border-radius:1px;
+    background:rgba(255,255,255,.14);}
   .cov.spine{inset:0;border-radius:var(--r);
     background:radial-gradient(circle at 50% 50%, rgba(255,209,102,.20), transparent 68%);}
   .tile.spined .cov.spine{opacity:1;}
@@ -552,6 +566,66 @@ const ART = {
     <rect x="7" y="51" width="50" height="4" rx="2" fill="rgba(0,0,0,.2)"/>
     <rect class="fillbar" data-max="42" x="11" y="52" width="${42*o.f}" height="2" rx="1" fill="#FFFFFF"/>
   </svg>`,
+  sensor:(o)=>`<svg class="art" viewBox="0 0 64 64">
+    <rect x="14" y="40" width="36" height="14" rx="5" fill="#1F6B57"/>
+    <rect x="28" y="26" width="8" height="16" rx="3" fill="#2E8B72"/>
+    <circle cx="32" cy="22" r="13" fill="#3FA98C"/>
+    <circle cx="32" cy="22" r="13" fill="#7CE0C3" opacity=".9"/>
+    <circle cx="32" cy="22" r="6" fill="#0B3F33"/>
+    <circle cx="32" cy="22" r="2.6" fill="#FFE66D" class="breathe"/>
+    <g stroke="#B6FFE9" stroke-width="2" fill="none" opacity=".7" class="breathe">
+      <path d="M15 22a17 17 0 0 1 5-12"/><path d="M49 22a17 17 0 0 0-5-12"/>
+    </g>
+  </svg>`,
+  halon:(o)=>`<svg class="art" viewBox="0 0 64 64">
+    <rect x="16" y="16" width="32" height="40" rx="12" fill="#9E2B2B"/>
+    <rect x="16" y="14" width="32" height="38" rx="12" fill="#E2453F"/>
+    <rect x="27" y="6" width="10" height="10" rx="3" fill="#7A1A1A"/>
+    <rect x="20" y="24" width="24" height="12" rx="4" fill="#FFF1EC" opacity=".9"/>
+    <g fill="#7A1A1A"><rect x="23" y="27" width="18" height="2.4" rx="1.2"/><rect x="23" y="31" width="12" height="2.4" rx="1.2"/></g>
+    <g fill="#CFE6FF" class="breathe"><circle cx="24" cy="46" r="2.2"/><circle cx="32" cy="48" r="2.2"/><circle cx="40" cy="46" r="2.2"/></g>
+  </svg>`,
+  silo:(o)=>`<svg class="art" viewBox="0 0 64 64">
+    <rect x="12" y="14" width="40" height="42" rx="8" fill="#3B3A86"/>
+    <rect x="12" y="12" width="40" height="40" rx="8" fill="#5D5BC0"/>
+    <ellipse cx="32" cy="12" rx="20" ry="6" fill="#8785E0"/>
+    <g fill="#2A2965" opacity=".7">
+      <rect x="17" y="20" width="30" height="4" rx="2"/><rect x="17" y="28" width="30" height="4" rx="2"/>
+      <rect x="17" y="36" width="30" height="4" rx="2"/>
+    </g>
+    <rect x="17" y="44" width="30" height="5" rx="2.5" fill="rgba(0,0,0,.28)"/>
+    <rect x="19" y="45" width="18" height="3" rx="1.5" fill="#C7A8FF" class="breathe"/>
+  </svg>`,
+  vault:(o)=>`<svg class="art" viewBox="0 0 64 64">
+    <rect x="7" y="9" width="50" height="48" rx="9" fill="#2C5470"/>
+    <rect x="7" y="7" width="50" height="46" rx="9" fill="#4E86AE"/>
+    <circle cx="32" cy="30" r="17" fill="#20455E"/>
+    <circle cx="32" cy="30" r="12" fill="#7FB6D6"/>
+    <g class="spin" style="animation-duration:7s" stroke="#20455E" stroke-width="3.2" stroke-linecap="round">
+      <path d="M32 20v20M22 30h20M25 23l14 14M39 23L25 37"/>
+    </g>
+    <circle cx="32" cy="30" r="4" fill="#E8F6FF"/>
+    <g fill="#CFE6FF" opacity=".8"><circle cx="13" cy="14" r="2"/><circle cx="51" cy="14" r="2"/></g>
+  </svg>`,
+  desk:(o)=>`<svg class="art" viewBox="0 0 64 64">
+    <rect x="8" y="12" width="48" height="30" rx="6" fill="#1D5B44"/>
+    <rect x="8" y="10" width="48" height="29" rx="6" fill="#2E8B62"/>
+    <rect x="13" y="15" width="38" height="19" rx="3" fill="#0B2F22"/>
+    <path d="M17 30l7-7 5 5 8-11 6 7 4-4" stroke="#7CE0C3" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="47" cy="20" r="2.4" fill="#FFE66D" class="breathe"/>
+    <rect x="24" y="42" width="16" height="5" rx="2" fill="#1D5B44"/>
+    <rect x="14" y="47" width="36" height="6" rx="3" fill="#2E8B62"/>
+  </svg>`,
+  exchange:(o)=>`<svg class="art" viewBox="0 0 64 64">
+    <rect x="6" y="8" width="52" height="42" rx="7" fill="#6B4E14"/>
+    <rect x="6" y="6" width="52" height="41" rx="7" fill="#C79A2E"/>
+    <rect x="10" y="10" width="44" height="29" rx="4" fill="#31240A"/>
+    <g fill="#FFE66D"><rect x="14" y="26" width="5" height="9" rx="1.5"/><rect x="22" y="20" width="5" height="15" rx="1.5"/>
+      <rect x="30" y="24" width="5" height="11" rx="1.5"/><rect x="38" y="15" width="5" height="20" rx="1.5"/>
+      <rect x="46" y="21" width="5" height="14" rx="1.5"/></g>
+    <path d="M14 24l8-6 8 4 8-8 8 5" stroke="#7CE0C3" stroke-width="2.2" fill="none" stroke-linecap="round" class="breathe"/>
+    <rect x="16" y="50" width="32" height="6" rx="3" fill="#6B4E14"/>
+  </svg>`,
   batt:(o)=>`<svg class="art" viewBox="0 0 64 64">
     <rect x="24" y="6" width="16" height="6" rx="3" fill="#2E7F6C"/>
     <rect x="10" y="11" width="44" height="45" rx="9" fill="#4FBF9C"/>
@@ -587,8 +661,35 @@ const MACH = {
   solar:{name:'Solar',   base:90000, growth:1.24, draw:0,  cap:34,              unlock:'solar', desc:'+34 kW. No heat, no draw, no noise.' },
   spine:{name:'Spine',   base:150000,growth:1.28, draw:6,  heat:2.5, row:0.14,  unlock:'spine', desc:'Every compute tile in its row and its column runs 14% faster.' },
   heatx:{name:'Exchanger',base:380000,growth:1.30,draw:8,  global:1.4, recover:1, unlock:'heatx', desc:'Cools its hall and sells the heat it pulls out. Pays best in a hot hall.' },
-  quantum:{name:'Q-core',base:1200000,growth:1.26,draw:70, heat:55, rate:60,    unlock:'quantum', desc:'Sixty racks in one tile. Needs a power plant and a lot of ice.' }
+  quantum:{name:'Q-core',base:1200000,growth:1.26,draw:70, heat:55, rate:60,    unlock:'quantum', desc:'Sixty racks in one tile. Needs a power plant and a lot of ice.' },
+
+  /* Care: keeps hardware alive rather than making it faster. */
+  sensor:{name:'Sensor',  base:3500,  growth:1.26, draw:1, heat:0.4, care:1,        cat:'care', unlock:'sensor',
+          desc:'Watches its four neighbours: they fault far less and gather dust slower.'},
+  halon:{ name:'Suppression',base:34000,growth:1.28,draw:2, heat:0.6, care:1.4, line:1, cat:'care', unlock:'halon',
+          desc:'The same protection, but down its whole row and column.'},
+
+  /* Store: banks compute instead of producing it. */
+  silo:{  name:'Silo',    base:12000, growth:1.26, draw:2, heat:0.8, store:1.2,     cat:'store', unlock:'silo',
+          desc:'Its four neighbours hold far more compute before they stall.'},
+  vault:{ name:'Vault',   base:200000,growth:1.28, draw:5, global:0.5, storeHall:0.9, cat:'store', unlock:'vault',
+          desc:'Every compute tile in the hall holds more, and it runs cold.'},
+
+  /* Market: raises what compute is worth rather than how much you make. */
+  desk:{  name:'Desk',    base:26000, growth:1.27, draw:2, heat:0.5, mkt:0.15,      cat:'market', unlock:'desk',
+          desc:'Compute sold out of this hall fetches 15% more.'},
+  exchange:{name:'Exchange',base:450000,growth:1.30,draw:6, heat:1.2, mktAll:0.22,  cat:'market', unlock:'exchange',
+          desc:'Everything the whole site sells fetches 22% more.'}
 };
+/* Tray order groups the ladder families first, then the sideways ones. */
+const CAT={rack:'compute',gpu:'compute',tank:'compute',asic:'compute',quantum:'compute',
+  fan:'cool',ac:'cool',crac:'cool',heatx:'cool',
+  gen:'power',batt:'power',ups:'power',solar:'power',
+  sw:'link',spine:'link'};
+const catOf=k=>MACH[k].cat||CAT[k]||'compute';
+const CAT_ORDER=['compute','cool','power','link','care','store','market'];
+const TRAY_ORDER=Object.keys(MACH).sort((a,b)=>
+  CAT_ORDER.indexOf(catOf(a))-CAT_ORDER.indexOf(catOf(b)) || MACH[a].base-MACH[b].base);
 const isCooler = t => t.type==='fan'||t.type==='ac'||t.type==='crac'||t.type==='heatx';
 
 const UPG = {
@@ -631,7 +732,13 @@ const UPG = {
   optics:   {name:'Fibre optics',     max:15, base:16000,growth:1.42, zero:'Spines drive their row and column harder. 12% a level.',
              desc:l=>`Spines reach their row and column ${pct(0.12*l)} harder.`},
   recovery: {name:'Heat recovery',    max:15, base:40000,growth:1.44, zero:'Sell recovered heat for more than it is worth now. 25% a level.',
-             desc:l=>`Exchangers sell recovered heat for ${pct(0.25*l)} more.`}
+             desc:l=>`Exchangers sell recovered heat for ${pct(0.25*l)} more.`},
+  diagnostics:{name:'Diagnostics',    max:15, base:6000, growth:1.40, zero:'Sensors and suppression rigs cover their tiles harder. 10% a level.',
+             desc:l=>`Sensors and suppression work ${pct(0.1*l)} harder.`},
+  racking:  {name:'Deep racking',     max:15, base:20000,growth:1.42, zero:'Silos and vaults bank more compute. 12% a level.',
+             desc:l=>`Silos and vaults hold ${pct(0.12*l)} more.`},
+  broker:   {name:'Brokerage',        max:15, base:60000,growth:1.44, zero:'Desks and exchanges squeeze more out of every sale. 12% a level.',
+             desc:l=>`Desks and exchanges pay ${pct(0.12*l)} more.`}
 };
 
 const AUTO = {
@@ -656,7 +763,13 @@ const HARD = {
   solar:{name:'Solar field', cost:260000,   desc:'Unlocks Solar: silent capacity that costs nothing to run.'},
   spine:{name:'Spine fabric',cost:600000,   desc:'Unlocks the Spine: a switch that reaches a whole row and column.'},
   heatx:{name:'Heat recovery',cost:1500000, desc:'Unlocks the Exchanger: turns the heat you are fighting into income.'},
-  quantum:{name:'Q-lab',     cost:9000000,  desc:'Unlocks the Q-core: sixty racks of compute in a single tile.'}
+  quantum:{name:'Q-lab',     cost:9000000,  desc:'Unlocks the Q-core: sixty racks of compute in a single tile.'},
+  sensor:{name:'Sensor mesh',cost:6000,     desc:'Unlocks the Sensor: local protection from faults and dust.'},
+  silo:{name:'Buffer silos', cost:30000,    desc:'Unlocks the Silo: neighbours bank far more before they stall.'},
+  desk:{name:'Trading desk', cost:70000,    desc:'Unlocks the Desk: compute from its hall sells for more.'},
+  halon:{name:'Suppression', cost:120000,   desc:'Unlocks the Suppression rig: sensor cover down a whole row and column.'},
+  vault:{name:'Cold vault',  cost:700000,   desc:'Unlocks the Vault: hall-wide storage that also runs cold.'},
+  exchange:{name:'Exchange floor',cost:1800000, desc:'Unlocks the Exchange: a site-wide lift on everything you sell.'}
 };
 
 /* Renown is kept through a rebirth; everything else is not. */
@@ -687,7 +800,7 @@ const S = {
   counts:{},
   up:{}, auto:{}, hard:{}, perks:{},
   flags:{},
-  halls:HALLS.map((h,i)=>({open:i===0?1:0, rows:h.start, tiles:[], grid:null, warn:0}))
+  halls:HALLS.map((h,i)=>({open:i===0?1:0, rows:h.start, tiles:[], grid:null, warn:0, vaultN:0, deskN:0}))
 };
 for(const k in MACH) S.counts[k]=0;
 for(const k in UPG)  S.up[k]=0;
@@ -698,7 +811,7 @@ HALLS.forEach((h,hi)=>{
   const hs=S.halls[hi];
   for(let y=0;y<h.rows;y++) for(let x=0;x<h.cols;x++)
     hs.tiles.push({h:hi,x,y,i:y*h.cols+x,type:null,heat:0,buf:0,fault:0,rep:0,
-                   dust:0,leak:0,fanned:0,wired:0,spined:0,el:null,art:null});
+                   dust:0,leak:0,fanned:0,wired:0,spined:0,cared:0,silod:0,el:null,art:null});
 });
 /* Flat list of every tile in an open hall — the sim walks this every frame. */
 let live=[];
@@ -734,6 +847,9 @@ const opticMult  =()=>1+0.12*S.up.optics;
 const tankRate   =()=>1+0.12*S.up.immersion;
 const tankCool   =()=>1+0.1*S.up.immersion;
 const recoverMult=()=>1+0.25*S.up.recovery;
+const careMult   =()=>1+0.10*S.up.diagnostics;
+const storeMult  =()=>1+0.12*S.up.racking;
+const brokerMult =()=>1+0.12*S.up.broker;
 const offlineCap =()=>(8+2*S.up.telemetry)*3600;
 const dustRate   =()=>0.0055*Math.pow(0.88,S.up.filters);
 const leakChance =()=>0.0042*Math.pow(0.82,S.up.seals);
@@ -780,13 +896,47 @@ function recomputeAdj(hi){
     }
     t.fanned=f; t.wired=w;
   }
+  /* Sensors and silos work on their four neighbours, like fans do. */
+  for(const t of S.halls[hi].tiles){
+    let care=0, store=0;
+    for(const nb of neighbours(t)){
+      if(nb.type==='sensor') care+=MACH.sensor.care;
+      if(nb.type==='silo')   store+=MACH.silo.store;
+    }
+    t.cared=care; t.silod=store;
+  }
   /* A spine reaches its whole row and column, so tally the lines once rather
      than scanning the grid per tile. */
   const H=HALLS[hi], tiles=S.halls[hi].tiles;
   const rows=new Array(H.rows).fill(0), cols=new Array(H.cols).fill(0);
   for(const t of tiles) if(t.type==='spine'){ rows[t.y]++; cols[t.x]++; }
   for(const t of tiles) t.spined=rows[t.y]+cols[t.x];
+  /* A suppression rig protects its whole row and column, the way a spine feeds one. */
+  const hr=new Array(H.rows).fill(0), hc=new Array(H.cols).fill(0);
+  for(const t of tiles) if(t.type==='halon'){ hr[t.y]++; hc[t.x]++; }
+  for(const t of tiles) t.cared+=(hr[t.y]+hc[t.x])*MACH.halon.care;
+  /* Hall-wide hardware is counted once per hall rather than per tile. */
+  const hs=S.halls[hi];
+  hs.vaultN=0; hs.deskN=0;
+  for(const t of tiles){ if(t.type==='vault') hs.vaultN++; if(t.type==='desk') hs.deskN++; }
+  siteExch=0;
+  for(const h of S.halls) if(h.open) for(const t of h.tiles) if(t.type==='exchange') siteExch++;
 }
+let siteExch=0;
+/* What one tile can bank, and what its compute is worth, both depend on what is
+   standing near it — so neither is a single global number any more. */
+function tileBuf(t){
+  const hs=S.halls[t.h];
+  return bufMax()*(1 + (t.silod + hs.vaultN*MACH.vault.storeHall)*storeMult());
+}
+function priceFor(t){
+  const hs=S.halls[t.h];
+  return price()
+    * (1 + hs.deskN*MACH.desk.mkt*brokerMult())
+    * (1 + siteExch*MACH.exchange.mktAll*brokerMult());
+}
+const careScale = t => Math.pow(0.55, t.cared*careMult());
+const dustScale = t => Math.pow(0.62, t.cared*careMult());
 
 /* Power is site-wide, and both the live sim and the offline catch-up need it. */
 function powerState(){
@@ -868,7 +1018,7 @@ function load(){
     for(const k in S.counts) S.counts[k]=0;
     for(const hs of S.halls){
       if(!hs.open){ for(const t of hs.tiles) t.type=null; continue; }
-      for(const t of hs.tiles){ if(t.type) S.counts[t.type]++; t.buf=Math.min(t.buf,bufMax()); }
+      for(const t of hs.tiles) if(t.type) S.counts[t.type]++;
     }
     return d.savedAt||null;
   }catch(e){ return null; }
@@ -880,7 +1030,7 @@ function offlineEarnings(savedAt){
   const eff=Math.min(1,0.35+0.13*S.auto.night), brown=powerState().brown;
   let out=0;
   for(const t of live) if(isCompute(t)&&t.fault===0&&unlocked(t))
-    out += MACH[t.type].rate*rateMult()*boostOf(t)*price()*secs*eff*brown;
+    out += MACH[t.type].rate*rateMult()*boostOf(t)*priceFor(t)*secs*eff*brown;
   return out;
 }
 
@@ -917,7 +1067,7 @@ function doRebirth(){
 const floorEl=$('floor'), stageEl=document.querySelector('.stage');
 const ghost1=document.querySelector('.ghost.g1'), ghost2=document.querySelector('.ghost.g2');
 const TILE_HTML='<div class="heatveil"></div><div class="dustveil"></div>'
-  +'<i class="cov spine"></i><i class="cov cool"></i><i class="cov wire"></i>'
+  +'<i class="cov aux"></i><i class="cov spine"></i><i class="cov cool"></i><i class="cov wire"></i>'
   +'<span class="plus">+</span><span class="lockg"></span>'
   +'<span class="warnpip">!</span><span class="leakpip">💧</span><span class="dustpip">✦</span>';
 function buildHall(hi){
@@ -1049,6 +1199,11 @@ function tapTile(t){
   if(t.type==='fan'){ flash(t,'coolflash'); float(t,'Cools these'); return; }
   if(t.type==='sw'){ flash(t,'wireflash'); float(t,'Feeds these'); return; }
   if(t.type==='spine'){ flashLine(t); float(t,'Feeds this row and column'); return; }
+  if(t.type==='sensor'){ flash(t,'auxflash'); float(t,'Watches these'); return; }
+  if(t.type==='silo'){ flash(t,'auxflash'); float(t,'Banks for these'); return; }
+  if(t.type==='halon'){ flashLine(t,'auxflash'); float(t,'Covers this row and column'); return; }
+  if(t.type==='vault'||t.type==='desk'||t.type==='exchange'){
+    flashHall(t,'auxflash'); float(t,t.type==='exchange'?'Lifts the whole site':'Serves this hall'); return; }
   if(t.type){ float(t,MACH[t.type].name); return; }
   place(t,S.tool);
 }
@@ -1059,12 +1214,20 @@ function flash(t,cls){
     setTimeout(()=>n.el.classList.remove(cls),900);
   }
 }
-function flashLine(t){
+function flashLine(t,cls){
+  cls=cls||'spineflash';
   for(const n of S.halls[t.h].tiles){
     if(n===t||(n.x!==t.x&&n.y!==t.y)) continue;
     if(!unlocked(n)||!n.el) continue;
-    n.el.classList.add('spineflash');
-    setTimeout(()=>n.el.classList.remove('spineflash'),900);
+    n.el.classList.add(cls);
+    setTimeout(()=>n.el.classList.remove(cls),900);
+  }
+}
+function flashHall(t,cls){
+  for(const n of S.halls[t.h].tiles){
+    if(n===t||!unlocked(n)||!n.el) continue;
+    n.el.classList.add(cls);
+    setTimeout(()=>n.el.classList.remove(cls),900);
   }
 }
 /* Placement would be permanent otherwise: a misplaced chiller used to be a dead
@@ -1091,7 +1254,7 @@ function sellTile(t){
   if(!t.type||!unlocked(t)) return;
   const k=t.type;
   let gain=0;
-  if(isCompute(t)&&t.buf>0.05){ gain=t.buf*price(); S.cash+=gain; S.earned+=gain; }
+  if(isCompute(t)&&t.buf>0.05){ gain=t.buf*priceFor(t); S.cash+=gain; S.earned+=gain; }
   const n=Math.max(0,S.counts[k]-1);
   const refund=Math.floor(costOf(k,n)*refundRate());
   S.counts[k]=n; S.cash+=refund;
@@ -1114,7 +1277,7 @@ function place(t,k){
   if(k==='heatx'&&S.counts.heatx===1) toast('An exchanger earns more the hotter its hall runs.');
 }
 function collect(t,manual){
-  const v=t.buf*price()*(manual?tapBonus():1);
+  const v=t.buf*priceFor(t)*(manual?tapBonus():1);
   S.cash+=v; S.earned+=v; t.buf=0;
   float(t,'+'+money(v)); sparks(t); bumpWallet();
 }
@@ -1188,9 +1351,10 @@ function tick(now){
   /* A chiller or CRAC only cools the hall it stands in, and not while it leaks. */
   const gcool=S.halls.map(()=>0);
   for(const hs of S.halls) hs.warn=0;
-  for(const t of live)
-    if((t.type==='ac'||t.type==='crac'||t.type==='heatx')&&!t.leak)
-      gcool[t.h]+=MACH[t.type].global*coolMult();
+  for(const t of live){
+    const m=MACH[t.type];
+    if(m&&m.global&&!t.leak) gcool[t.h]+=m.global*coolMult();
+  }
 
   let hottest=0, anyFault=0, anyLeak=0, anyDust=0, nMach=0, income=0;
   /* Exchangers are paid out of the heat they pull from their own hall, so the
@@ -1199,20 +1363,20 @@ function tick(now){
   for(const t of live){ if(!t.type) continue;
     heatSum[t.h]+=t.heat; heatN[t.h]++;
     if(t.type==='heatx'&&!t.leak) xchg[t.h]++; }
-  const bmax=bufMax(), dr=dustRate(), lc=leakChance();
+  const dr=dustRate(), lc=leakChance();
   const crew=0.022*S.auto.crew, failover=Math.min(0.5,0.06*S.auto.failover);
   for(const t of live){
     if(!t.type){ t.heat=Math.max(0,t.heat-(1.2+0.3*S.up.ambient)*dt); continue; }
     const m=MACH[t.type];
 
     /* Dust settles on everything and chokes that tile's cooling. */
-    t.dust=Math.min(1,t.dust+dr*dt);
+    t.dust=Math.min(1,t.dust+dr*dustScale(t)*dt);
     if(crew>0) t.dust=Math.max(0,t.dust-crew*dt);
     if(t.dust>=DUSTY) anyDust++;
     nMach++;
 
     /* Coolant lines burst; a leaking cooler cools nothing until it is sealed. */
-    if(isCooler(t)&&!t.leak&&Math.random()<lc*dt){
+    if(isCooler(t)&&!t.leak&&Math.random()<lc*careScale(t)*dt){
       t.leak=1; t.rep=0; recomputeAdj(t.h);
       once('leak','A coolant line burst. Tap the dripping tile to seal it.');
     }
@@ -1235,12 +1399,13 @@ function tick(now){
     const active = t.fault>0 ? failover*brown : throttle*brown;
 
     if(isCompute(t)){
-      const full=t.buf>=bmax-0.001;
+      const tb=tileBuf(t), tp=priceFor(t);
+      const full=t.buf>=tb-0.001;
       const out=m.rate*rateMult()*boostOf(t)*active;
       /* Only count what is actually being banked, so the /s readout stops lying
          about stalled racks. */
-      if(!full){ t.buf=Math.min(bmax,t.buf+out*dt); income+=out*price(); }
-      else if(S.auto.overflow){ const g=out*0.25*price(); S.cash+=g*dt; S.earned+=g*dt; income+=g; }
+      if(!full){ t.buf=Math.min(tb,t.buf+out*dt); income+=out*tp; }
+      else if(S.auto.overflow){ const g=out*0.25*tp; S.cash+=g*dt; S.earned+=g*dt; income+=g; }
       t.heat+=m.heat*heatMult()*(full&&!S.auto.overflow?0.4:1)*active*dt;
     } else {
       t.heat+=(m.heat||0)*heatMult()*brown*dt;
@@ -1251,6 +1416,7 @@ function tick(now){
     let risk=0;
     if(t.heat>90) risk+=0.32;
     if(ps.surging&&brown<0.85) risk+=0.14;
+    risk*=careScale(t);
     if(isCompute(t)&&t.fault===0&&risk>0&&Math.random()<risk*faultMult()*dt){
       t.fault=1; t.rep=0; once('fault','Overheated. Tap the shaking tile to reboot it.');
     }
@@ -1291,11 +1457,11 @@ function tick(now){
   }
 
   saveT+=dt; if(saveT>5){ saveT=0; save(); }
-  draw_(draw,cap,hottest,brown,anyFault,income,bmax,ps.surging,anyLeak,anyDust,nMach);
+  draw_(draw,cap,hottest,brown,anyFault,income,ps.surging,anyLeak,anyDust,nMach);
   requestAnimationFrame(tick);
 }
 addEventListener('pageshow',startLoop);
-function collectQuiet(t){ const v=t.buf*price(); S.cash+=v; S.earned+=v; t.buf=0; }
+function collectQuiet(t){ const v=t.buf*priceFor(t); S.cash+=v; S.earned+=v; t.buf=0; }
 
 /* ================= draw ================= */
 const UI={cash:$('cash'),dcash:$('dcash'),drenown:$('drenown'),rate:$('rate'),pbar:$('pbar'),pval:$('pval'),
@@ -1305,7 +1471,7 @@ let affordT=0, affordable=false;
 /* Live figures the Site tab reads; it re-renders from here rather than
    recomputing the whole floor for itself. */
 const STATS={income:0,draw:0,cap:0,hottest:0,machines:0,faults:0,leaks:0,dusty:0};
-function draw_(draw,cap,hottest,brown,anyFault,income,bmax,surging,anyLeak,anyDust,nMach){
+function draw_(draw,cap,hottest,brown,anyFault,income,surging,anyLeak,anyDust,nMach){
   STATS.income=income; STATS.draw=draw; STATS.cap=cap; STATS.hottest=hottest;
   STATS.machines=nMach; STATS.faults=anyFault; STATS.leaks=anyLeak; STATS.dusty=anyDust;
   const selling=S.tool===SELL;
@@ -1314,8 +1480,12 @@ function draw_(draw,cap,hottest,brown,anyFault,income,bmax,surging,anyLeak,anyDu
   floorEl.classList.toggle('fanmode',S.tool==='fan');
   floorEl.classList.toggle('wiremode',S.tool==='sw');
   floorEl.classList.toggle('spinemode',S.tool==='spine');
+  floorEl.classList.toggle('caremode',   S.tool==='sensor'||S.tool==='halon');
+  floorEl.classList.toggle('storemode',  S.tool==='silo'  ||S.tool==='vault');
+  floorEl.classList.toggle('marketmode', S.tool==='desk'  ||S.tool==='exchange');
   /* Only the hall you are standing in needs its pixels updated. */
-  for(const t of S.halls[S.hall].tiles){
+  const hs=S.halls[S.hall];
+  for(const t of hs.tiles){
     const el=t.el;
     if(!unlocked(t)){ if(!el.classList.contains('locked')) paint(t); continue; }
     if(el.classList.contains('locked')) paint(t);
@@ -1330,10 +1500,14 @@ function draw_(draw,cap,hottest,brown,anyFault,income,bmax,surging,anyLeak,anyDu
     el.classList.toggle('cooled',t.fanned>0);
     el.classList.toggle('wired',t.wired>0);
     el.classList.toggle('spined',t.spined>0);
+    el.classList.toggle('cared',t.cared>0);
+    el.classList.toggle('stored',t.silod>0||hs.vaultN>0);
+    el.classList.toggle('markd',hs.deskN>0||siteExch>0);
     el.classList.toggle('sellable',selling&&!!t.type);
     if(isCompute(t)){
-      repaintArt(t,bmax);
-      el.classList.toggle('ready',t.buf>=bmax*0.999&&t.fault===0);
+      const tb=tileBuf(t);
+      repaintArt(t,tb);
+      el.classList.toggle('ready',t.buf>=tb*0.999&&t.fault===0);
     }
     el.classList.toggle('placing',!t.type&&canPlace);
   }
@@ -1382,7 +1556,13 @@ const trayEl=$('tray');
 const SELL_ICON=`<svg viewBox="0 0 64 64"><path d="M35 7H15a8 8 0 0 0-8 8v20a8 8 0 0 0 2.3 5.7l20 20a8 8 0 0 0 11.4 0l16-16a8 8 0 0 0 0-11.4l-20-20A8 8 0 0 0 35 7z" fill="#FF7A59"/><circle cx="21" cy="21" r="5.5" fill="#FFF1EC"/></svg>`;
 function buildTray(){
   trayEl.innerHTML='';
-  for(const k in MACH){
+  let prevCat=null;
+  for(const k of TRAY_ORDER){
+    const c=catOf(k);
+    if(prevCat&&c!==prevCat){
+      const sep=document.createElement('i'); sep.className='traysep'; trayEl.appendChild(sep);
+    }
+    prevCat=c;
     const b=document.createElement('button');
     b.className='tool'; b.dataset.k=k; b.type='button';
     b.innerHTML=ICON(k)+`<span class="n">${MACH[k].name}</span><span class="c num"></span>`;
@@ -1401,6 +1581,7 @@ function buildTray(){
 function paintTray(){
   for(const b of trayEl.children){
     const k=b.dataset.k;
+    if(!k) continue;                     /* the category separators */
     if(k===SELL){ b.classList.toggle('sel',S.tool===SELL); continue; }
     const m=MACH[k],lock=!!(m.unlock&&!S.hard[m.unlock]),c=costOf(k);
     b.classList.toggle('lock',lock);
@@ -1688,7 +1869,7 @@ addEventListener('visibilitychange',()=>{
 addEventListener('pagehide',save);
 
 /* Keyboard control, mostly for the desktop layout. */
-const TOOLKEYS=Object.keys(MACH);
+const TOOLKEYS=TRAY_ORDER;
 addEventListener('keydown',e=>{
   if(e.metaKey||e.ctrlKey||e.altKey) return;
   const k=e.key;
@@ -1717,6 +1898,8 @@ function pickTool(k){
 const savedAt=load();
 rebuildLive();
 S.halls.forEach((hs,i)=>{ if(hs.open){ buildHall(i); recomputeAdj(i); } });
+/* Adjacency decides each tile's cap, so a saved buffer can only be trimmed now. */
+for(const t of live) if(t.type) t.buf=Math.min(t.buf,tileBuf(t));
 buildTray(); buildHalls();
 S.halls[S.hall].tiles.forEach(paint);
 paintTray(); sizeFloor();

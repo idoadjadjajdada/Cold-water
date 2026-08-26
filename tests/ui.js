@@ -115,8 +115,11 @@ const DESK={width:1440,height:900};
 
   console.log('\n--- keyboard ---');
   ({p,ctx,errs}=await seed(b,base({cash:1e6,hard:ALL}),DESK));
+  /* Tools are ordered by family, so assert against the tray rather than a name. */
+  const second=await p.evaluate(()=>document.querySelectorAll('.tool[data-k]')[1].dataset.k);
   await p.keyboard.press('2'); await p.waitForTimeout(150);
-  ok('2 picks the second tool', await p.locator('.tool[data-k="fan"]').evaluate(e=>e.classList.contains('sel')));
+  ok('2 picks the second tool in the tray',
+     await p.locator(`.tool[data-k="${second}"]`).evaluate(e=>e.classList.contains('sel')), second);
   await p.keyboard.press('s'); await p.waitForTimeout(150);
   ok('s toggles sell mode', await p.locator('.tool[data-k="sell"]').evaluate(e=>e.classList.contains('sel')));
   await p.keyboard.press('s'); await p.waitForTimeout(150);
@@ -150,6 +153,8 @@ const DESK={width:1440,height:900};
   }));
   ok('the tray shows every tool without scrolling',
      await p.locator('#tray').evaluate(e=>e.scrollWidth<=e.clientWidth+1));
+  ok('the tray is grouped into families', await p.locator('.traysep').count()===6,
+     String(await p.locator('.traysep').count()));
   const deskTs=await p.evaluate(()=>parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ts')));
   ok('the board fills the space it is given', deskTs>=100, '--ts='+deskTs);
   ok('no horizontal overflow', await p.evaluate(()=>document.body.scrollWidth<=window.innerWidth));

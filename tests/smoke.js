@@ -25,9 +25,9 @@ const ok=(name,cond,extra='')=>{ if(!cond) fails++; console.log((cond?'  ok  ':'
   console.log('\n--- layout ---');
   ok('30 tiles', await page.locator('.tile').count()===30);
   ok('12 unlocked at start', await page.locator('.tile:not(.locked)').count()===12);
-  ok('16 tray tools (15 machines + Sell)', await page.locator('.tool').count()===16,
+  ok('22 tray tools (21 machines + Sell)', await page.locator('.tool').count()===22,
      String(await page.locator('.tool').count()));
-  ok('10 hardware-gated tools start locked', (await page.locator('.tool.lock').count())===10,
+  ok('16 hardware-gated tools start locked', (await page.locator('.tool.lock').count())===16,
      String(await page.locator('.tool.lock').count()));
   ok('no horizontal overflow', await page.evaluate(()=>document.body.scrollWidth<=window.innerWidth));
 
