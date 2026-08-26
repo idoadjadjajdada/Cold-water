@@ -132,6 +132,32 @@
   .ghost.g2{transform:translate(33px,29px) scale(.915);}
   .ghost.g1.on{opacity:.62;} .ghost.g2.on{opacity:.33;}
 
+  /* Live events get one strip: it only takes space while something is happening. */
+  .events{flex:0 0 auto;display:none;gap:7px;justify-content:center;flex-wrap:wrap;}
+  .events.on{display:flex;}
+  .ev{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.34);border-radius:999px;
+    padding:5px 13px;font-size:12.5px;font-weight:600;box-shadow:var(--panel-lip);max-width:100%;}
+  .ev .evn{white-space:nowrap;}
+  .ev .evbar{flex:0 0 62px;height:5px;border-radius:99px;background:rgba(0,0,0,.45);overflow:hidden;}
+  .ev .evbar i{display:block;height:100%;border-radius:99px;transition:width .2s linear;}
+  .ev .evv{opacity:.65;font-size:11.5px;white-space:nowrap;min-width:34px;text-align:right;}
+  .ev.surge{box-shadow:inset 0 0 0 2px rgba(255,92,122,.8);}
+  .ev.surge .evbar i{background:var(--danger);}
+  .ev.heat{box-shadow:inset 0 0 0 2px rgba(255,122,89,.75);}
+  .ev.heat .evbar i{background:var(--coral);}
+  .ev.cold{box-shadow:inset 0 0 0 2px rgba(143,196,255,.75);}
+  .ev.cold .evbar i{background:var(--sky);}
+  .ev.job{box-shadow:inset 0 0 0 2px rgba(124,224,195,.75);}
+  .ev.job .evbar i{background:var(--mint);}
+  .ev.job.late{box-shadow:inset 0 0 0 2px rgba(255,209,102,.85);}
+
+  /* the scheduler bot used to empty racks silently */
+  .tile.collected{animation:collected .45s ease-out;}
+  @keyframes collected{0%{box-shadow:0 0 0 0 rgba(255,230,109,.75);}100%{box-shadow:0 0 0 12px rgba(255,230,109,0);}}
+
+  #floor.clustermode .tile.packed .cov.aux{opacity:1;
+    box-shadow:inset 0 0 0 3px rgba(124,224,195,.85), inset 0 0 16px rgba(124,224,195,.3);}
+
   .halls{flex:0 0 auto;display:none;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;}
   .halls.on{display:flex;}
   .hallchip{background:rgba(0,0,0,.3);border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:600;opacity:.62;
@@ -220,7 +246,11 @@
   .tile.selling::before{content:'';position:absolute;inset:-3px;border-radius:calc(var(--r) + 3px);
     box-shadow:0 0 0 3px var(--danger),0 0 22px rgba(255,92,122,.5);pointer-events:none;animation:sellring .44s linear forwards;}
   @keyframes sellring{from{opacity:.25;}to{opacity:1;}}
-  .spin{transform-origin:50% 50%;animation:spin 1.6s linear infinite;}
+  /* transform-box defaults to view-box on SVG, so 50% 50% meant the centre of the
+     whole 64x64 canvas rather than the centre of the part that is turning. The
+     CRAC's fan sat 7px off its own axis because of it. fill-box resolves the
+     origin against each element's own geometry. */
+  .spin{transform-box:fill-box;transform-origin:50% 50%;animation:spin 1.6s linear infinite;}
   .tile.hot .spin{animation-duration:.7s;}
   @keyframes spin{to{transform:rotate(360deg);}}
   .breathe{animation:breathe 2.2s ease-in-out infinite;transform-origin:50% 50%;}
@@ -376,6 +406,7 @@
   </header>
   <main>
     <div class="halls" id="halls"></div>
+    <div class="events" id="events"></div>
     <div class="stage"><div id="floor">
       <div class="ghost g2"></div><div class="ghost g1"></div>
     </div></div>
@@ -738,7 +769,13 @@ const UPG = {
   racking:  {name:'Deep racking',     max:15, base:20000,growth:1.42, zero:'Silos and vaults bank more compute. 12% a level.',
              desc:l=>`Silos and vaults hold ${pct(0.12*l)} more.`},
   broker:   {name:'Brokerage',        max:15, base:60000,growth:1.44, zero:'Desks and exchanges squeeze more out of every sale. 12% a level.',
-             desc:l=>`Desks and exchanges pay ${pct(0.12*l)} more.`}
+             desc:l=>`Desks and exchanges pay ${pct(0.12*l)} more.`},
+  packing:  {name:'Dense packing',    max:20, base:3000, growth:1.38, zero:'Compute sat next to other compute runs faster. 12% a level on top of the base 6%.',
+             desc:l=>`Each neighbouring compute tile adds ${pct(0.06*(1+0.12*l))}.`},
+  envelope: {name:'Building envelope',max:12, base:9000, growth:1.42, zero:'Blunt the weather before it reaches the floor. 12% a level.',
+             desc:l=>`Heat waves and cold snaps hit ${pct(1-Math.pow(0.88,l))} softer.`},
+  sla:      {name:'Service levels',   max:15, base:14000,growth:1.44, zero:'Rush jobs pay better. 20% a level.',
+             desc:l=>`Completed rush jobs pay ${pct(0.2*l)} more.`}
 };
 
 const AUTO = {
@@ -797,6 +834,8 @@ function renownFor(earned){ return earned<REBIRTH_MIN?0:Math.floor(12*Math.pow(e
 const S = {
   cash:40, tool:'rack', earned:0, botT:0, savedAt:Date.now(), hall:0,
   renown:0, lifetime:0, runs:0, surge:0, surgeT:0,
+  weather:'', weatherLeft:0, weatherT:0,
+  job:null, jobT:0, unitsPerSec:0,
   counts:{},
   up:{}, auto:{}, hard:{}, perks:{},
   flags:{},
@@ -811,7 +850,7 @@ HALLS.forEach((h,hi)=>{
   const hs=S.halls[hi];
   for(let y=0;y<h.rows;y++) for(let x=0;x<h.cols;x++)
     hs.tiles.push({h:hi,x,y,i:y*h.cols+x,type:null,heat:0,buf:0,fault:0,rep:0,
-                   dust:0,leak:0,fanned:0,wired:0,spined:0,cared:0,silod:0,el:null,art:null});
+                   dust:0,leak:0,fanned:0,wired:0,spined:0,cared:0,silod:0,packed:0,el:null,art:null});
 });
 /* Flat list of every tile in an open hall — the sim walks this every frame. */
 let live=[];
@@ -850,6 +889,9 @@ const recoverMult=()=>1+0.25*S.up.recovery;
 const careMult   =()=>1+0.10*S.up.diagnostics;
 const storeMult  =()=>1+0.12*S.up.racking;
 const brokerMult =()=>1+0.12*S.up.broker;
+const packBonus  =()=>0.06*(1+0.12*S.up.packing);
+const weatherSev =()=>Math.pow(0.88,S.up.envelope);
+const slaMult    =()=>1+0.2*S.up.sla;
 const offlineCap =()=>(8+2*S.up.telemetry)*3600;
 const dustRate   =()=>0.0055*Math.pow(0.88,S.up.filters);
 const leakChance =()=>0.0042*Math.pow(0.82,S.up.seals);
@@ -865,7 +907,9 @@ function setStyle(el,prop,v){ const k='_s'+prop; if(el[k]!==v){ el[k]=v; el.styl
 /* Adjacency multipliers a compute tile enjoys: switches next door, spines on
    its row or column, and the tank's own immersion bonus. */
 function boostOf(t){
-  return (1 + t.wired*MACH.sw.boost*meshMult() + t.spined*MACH.spine.row*opticMult())
+  return (1 + t.wired*MACH.sw.boost*meshMult()
+            + t.spined*MACH.spine.row*opticMult()
+            + t.packed*packBonus())
        * (t.type==='tank'?tankRate():1);
 }
 const canOpenRow = hi => S.halls[hi].rows < HALLS[hi].rows;
@@ -904,6 +948,9 @@ function recomputeAdj(hi){
       if(nb.type==='silo')   store+=MACH.silo.store;
     }
     t.cared=care; t.silod=store;
+    let pack=0;
+    for(const nb of neighbours(t)) if(isCompute(nb)) pack++;
+    t.packed=pack;
   }
   /* A spine reaches its whole row and column, so tally the lines once rather
      than scanning the grid per tile. */
@@ -964,7 +1011,7 @@ function save(){
     v:3, cash:S.cash, earned:S.earned, savedAt:S.savedAt, hall:S.hall,
     renown:S.renown, lifetime:S.lifetime, runs:S.runs, perks:S.perks,
     tool:S.tool===SELL?'rack':S.tool,   /* never reopen the game holding the sell tool */
-    counts:S.counts, up:S.up, auto:S.auto, hard:S.hard, flags:S.flags,
+    counts:S.counts, up:S.up, auto:S.auto, hard:S.hard, flags:S.flags, job:S.job,
     halls:S.halls.map(hs=>({open:hs.open?1:0, rows:hs.rows,
       tiles:hs.tiles.map(t=>t.type?[t.i,t.type,Math.round(t.heat),+t.buf.toFixed(2),
         t.fault>0?1:0,+t.dust.toFixed(2),t.leak?1:0]:null).filter(Boolean)}))
@@ -1011,6 +1058,10 @@ function load(){
         t.dust=clamp(num(dust,0),0,1); t.leak=leak?1:0;
       });
     });
+    const j=d.job;
+    if(j&&Number.isFinite(+j.need)&&Number.isFinite(+j.left)&&+j.left>0)
+      S.job={need:Math.max(1,Math.round(+j.need)), got:Math.max(0,num(j.got,0)),
+             left:Math.min(60,+j.left), reward:Math.max(0,num(j.reward,0))};
     S.hall=clamp(Math.round(num(d.hall,0)),0,S.halls.length-1);
     if(!S.halls[S.hall].open) S.hall=0;
 
@@ -1038,6 +1089,7 @@ function offlineEarnings(savedAt){
 function resetRun(){
   S.cash=seedCash(S.perks.seed);
   S.earned=0; S.tool='rack'; S.hall=0; S.botT=0; S.surge=0; S.surgeT=0;
+  S.weather=''; S.weatherLeft=0; S.weatherT=0; S.job=null; S.jobT=0;
   for(const k in S.counts) S.counts[k]=0;
   for(const k in S.up)   S.up[k]=0;
   for(const k in S.auto) S.auto[k]=0;
@@ -1183,6 +1235,44 @@ function paintHalls(){
   ghost2.classList.toggle('on', n>2);
 }
 
+/* ================= event strip ================= */
+/* Three fixed slots built once and shown as needed, so an event appearing does
+   not rebuild the strip under the player's eyes. */
+const eventsEl=$('events');
+function makeEv(cls){
+  const el=document.createElement('div');
+  el.className='ev '+cls;
+  el.innerHTML='<span class="evn"></span><i class="evbar"><i></i></i><span class="evv"></span>';
+  el.style.display='none';
+  eventsEl.appendChild(el);
+  return {el, name:el.querySelector('.evn'), bar:el.querySelector('.evbar>i'), val:el.querySelector('.evv')};
+}
+const EV={surge:makeEv('surge'), weather:makeEv('heat'), job:makeEv('job')};
+let evShown=0;
+function showEv(e,on,name,frac,val){
+  if(!on){ if(e.el.style.display!=='none') e.el.style.display='none'; return 0; }
+  if(e.el.style.display!=='flex') e.el.style.display='flex';
+  setText(e.name,name); setText(e.val,val);
+  setStyle(e.bar,'width',(Math.max(0,Math.min(1,frac))*100).toFixed(1)+'%');
+  return 1;
+}
+function paintEvents(){
+  let n=0;
+  n+=showEv(EV.surge, S.surge>0, 'Power surge', S.surge/6, Math.ceil(S.surge)+'s');
+  const w=S.weather;
+  if(w) EV.weather.el.className='ev '+(w==='heat'?'heat':'cold');
+  n+=showEv(EV.weather, !!w, w==='heat'?'Heat wave':'Cold snap',
+            S.weatherLeft/26, Math.ceil(S.weatherLeft)+'s');
+  if(S.job){
+    EV.job.el.classList.toggle('late',S.job.left<12);
+    n+=showEv(EV.job, true, 'Rush job '+Math.floor(S.job.got)+'/'+S.job.need,
+              S.job.got/S.job.need, Math.ceil(S.job.left)+'s');
+  } else n+=showEv(EV.job,false);
+  eventsEl.classList.toggle('on',n>0);
+  /* The strip changes how much height the board has to work with. */
+  if(n!==evShown){ evShown=n; sizeFloor(); }
+}
+
 /* ================= interaction ================= */
 const DUSTY=0.5;
 function tapTile(t){
@@ -1278,7 +1368,7 @@ function place(t,k){
 }
 function collect(t,manual){
   const v=t.buf*priceFor(t)*(manual?tapBonus():1);
-  S.cash+=v; S.earned+=v; t.buf=0;
+  S.cash+=v; S.earned+=v; jobAdd(t.buf); t.buf=0;
   float(t,'+'+money(v)); sparks(t); bumpWallet();
 }
 function float(t,txt){
@@ -1339,12 +1429,63 @@ function tickSurge(dt){
     once('surgetip','A UPS carries you through a surge. Line conditioner softens it.');
   }
 }
+/* Weather leans on the passive cooling every tile gets for free, so it is felt
+   hardest by floors that lean on that instead of on hardware. */
+function weatherCool(){
+  if(S.weather==='heat') return 1-0.5*weatherSev();
+  if(S.weather==='cold') return 1+0.6*weatherSev();
+  return 1;
+}
+function tickWeather(dt){
+  if(S.earned<5000) return;
+  if(S.weatherLeft>0){
+    S.weatherLeft-=dt;
+    if(S.weatherLeft<=0){ S.weather=''; S.weatherLeft=0; S.weatherT=160+Math.random()*160; }
+    return;
+  }
+  if(S.weatherT<=0){ S.weatherT=160+Math.random()*160; return; }
+  S.weatherT-=dt;
+  if(S.weatherT<=0){
+    S.weather=Math.random()<0.6?'heat':'cold';
+    S.weatherLeft=26; S.weatherT=0;
+    toast(S.weather==='heat'?'Heat wave — the floor sheds heat slower.'
+                            :'Cold snap — everything runs cooler for a while.');
+    once('weathertip','Building envelope softens the weather, whichever way it goes.');
+  }
+}
+/* A rush job is a short delivery target. It rewards paying attention without
+   punishing you for missing one: it simply expires. */
+function newJob(){
+  const rate=Math.max(0.4,S.unitsPerSec);
+  const need=Math.max(15,Math.round(rate*26));
+  S.job={need, got:0, left:48, reward:need*price()*3*slaMult()};
+  once('jobtip','Rush jobs pay a bonus for delivering compute in time. Missing one costs nothing.');
+}
+function tickJob(dt){
+  if(S.earned<2000) return;
+  if(S.job){
+    S.job.left-=dt;
+    if(S.job.got>=S.job.need){
+      const r=S.job.reward;
+      S.cash+=r; S.earned+=r; S.job=null; S.jobT=80+Math.random()*90;
+      toast('Rush job delivered. +'+money(r)); bumpWallet();
+    } else if(S.job.left<=0){
+      S.job=null; S.jobT=80+Math.random()*90;
+    }
+    return;
+  }
+  if(S.jobT<=0){ S.jobT=80+Math.random()*90; return; }
+  S.jobT-=dt;
+  if(S.jobT<=0) newJob();
+}
+function jobAdd(units){ if(S.job) S.job.got+=units; }
+
 function tick(now){
   if(document.hidden){ looping=false; return; }
   let dt=(now-last)/1000; last=now;
   if(dt>0.3) dt=0.3;
 
-  tickSurge(dt);
+  tickSurge(dt); tickWeather(dt); tickJob(dt);
   const ps=powerState(), draw=ps.draw, cap=ps.cap, brown=ps.brown;
   if(brown<1&&!ps.surging) once('brown','Brownout. Add a genset or a battery.');
 
@@ -1363,10 +1504,11 @@ function tick(now){
   for(const t of live){ if(!t.type) continue;
     heatSum[t.h]+=t.heat; heatN[t.h]++;
     if(t.type==='heatx'&&!t.leak) xchg[t.h]++; }
-  const dr=dustRate(), lc=leakChance();
+  const dr=dustRate(), lc=leakChance(), wc=weatherCool();
+  let units=0;
   const crew=0.022*S.auto.crew, failover=Math.min(0.5,0.06*S.auto.failover);
   for(const t of live){
-    if(!t.type){ t.heat=Math.max(0,t.heat-(1.2+0.3*S.up.ambient)*dt); continue; }
+    if(!t.type){ t.heat=Math.max(0,t.heat-(1.2+0.3*S.up.ambient)*wc*dt); continue; }
     const m=MACH[t.type];
 
     /* Dust settles on everything and chokes that tile's cooling. */
@@ -1389,7 +1531,7 @@ function tick(now){
     }
 
     /* Cooling is powered too: a brownout should not leave the fans at full tilt. */
-    let cool=gcool[t.h]*brown+0.55+0.12*S.up.ambient;
+    let cool=gcool[t.h]*brown+(0.55+0.12*S.up.ambient)*wc;
     cool+=t.fanned*MACH.fan.cools*coolMult()*brown;
     if(t.type==='fan'&&!t.leak) cool+=MACH.fan.cools*coolMult()*0.5*brown;
     if(t.type==='tank') cool*=tankCool();
@@ -1404,7 +1546,7 @@ function tick(now){
       const out=m.rate*rateMult()*boostOf(t)*active;
       /* Only count what is actually being banked, so the /s readout stops lying
          about stalled racks. */
-      if(!full){ t.buf=Math.min(tb,t.buf+out*dt); income+=out*tp; }
+      if(!full){ t.buf=Math.min(tb,t.buf+out*dt); income+=out*tp; units+=out; }
       else if(S.auto.overflow){ const g=out*0.25*tp; S.cash+=g*dt; S.earned+=g*dt; income+=g; }
       t.heat+=m.heat*heatMult()*(full&&!S.auto.overflow?0.4:1)*active*dt;
     } else {
@@ -1448,6 +1590,7 @@ function tick(now){
     S.cash+=g*dt; S.earned+=g*dt; income+=g;
   }
 
+  S.unitsPerSec=units;
   if(S.auto.bot>0){
     S.botT+=dt;
     if(S.botT>=botPeriod(S.auto.bot)){
@@ -1461,7 +1604,14 @@ function tick(now){
   requestAnimationFrame(tick);
 }
 addEventListener('pageshow',startLoop);
-function collectQuiet(t){ const v=t.buf*priceFor(t); S.cash+=v; S.earned+=v; t.buf=0; }
+function collectQuiet(t){
+  const v=t.buf*priceFor(t);
+  S.cash+=v; S.earned+=v; jobAdd(t.buf); t.buf=0;
+  /* A silent sweep gave no sign it had happened; a brief ring does. */
+  if(t.el&&t.h===S.hall&&!REDUCED){
+    t.el.classList.remove('collected'); void t.el.offsetWidth; t.el.classList.add('collected');
+  }
+}
 
 /* ================= draw ================= */
 const UI={cash:$('cash'),dcash:$('dcash'),drenown:$('drenown'),rate:$('rate'),pbar:$('pbar'),pval:$('pval'),
@@ -1483,6 +1633,8 @@ function draw_(draw,cap,hottest,brown,anyFault,income,surging,anyLeak,anyDust,nM
   floorEl.classList.toggle('caremode',   S.tool==='sensor'||S.tool==='halon');
   floorEl.classList.toggle('storemode',  S.tool==='silo'  ||S.tool==='vault');
   floorEl.classList.toggle('marketmode', S.tool==='desk'  ||S.tool==='exchange');
+  /* Holding a compute tool shows where a cluster bonus is waiting. */
+  floorEl.classList.toggle('clustermode', !!(tool&&tool.rate));
   /* Only the hall you are standing in needs its pixels updated. */
   const hs=S.halls[S.hall];
   for(const t of hs.tiles){
@@ -1503,6 +1655,7 @@ function draw_(draw,cap,hottest,brown,anyFault,income,surging,anyLeak,anyDust,nM
     el.classList.toggle('cared',t.cared>0);
     el.classList.toggle('stored',t.silod>0||hs.vaultN>0);
     el.classList.toggle('markd',hs.deskN>0||siteExch>0);
+    el.classList.toggle('packed',!t.type&&t.packed>0);
     el.classList.toggle('sellable',selling&&!!t.type);
     if(isCompute(t)){
       const tb=tileBuf(t);
@@ -1528,12 +1681,14 @@ function draw_(draw,cap,hottest,brown,anyFault,income,surging,anyLeak,anyDust,nM
   /* anyAffordable() walks every price curve; four times a second is plenty for a blinking dot. */
   if(--affordT<=0){ affordT=15; affordable=anyAffordable(); }
   UI.shopbtn.classList.toggle('has',affordable);
+  paintEvents();
   setText(UI.hint,hint(brown,anyFault,hottest,surging,anyLeak,anyDust));
   paintTray(); paintHalls();
 }
 function hint(brown,anyFault,hottest,surging,anyLeak,anyDust){
   if(S.tool===SELL) return 'Sell mode: tap a machine to sell it back.';
   if(surging) return 'Power surge. A UPS carries the extra draw until it passes.';
+  if(S.weather==='heat') return 'Heat wave. Passive cooling is weak until it passes.';
   if(anyLeak) return 'Coolant leak — tap the dripping tile to seal it.';
   if(anyFault) return 'A rack faulted. Tap the shaking tile to reboot it.';
   if(brown<1) return 'Brownout — drawing more power than you make. Place a genset.';
@@ -1543,6 +1698,7 @@ function hint(brown,anyFault,hottest,surging,anyLeak,anyDust){
   if(anyDust) return 'Dust is choking the cooling. Tap a dusty tile to wipe it down.';
   if(S.earned>400&&S.auto.bot===0) return 'Tired of tapping? Buy a scheduler bot.';
   if(S.earned>2000&&S.counts.sw===0) return 'A switch makes every rack around it faster.';
+  if(S.job&&S.job.left<15) return `Rush job: ${Math.max(0,S.job.need-Math.floor(S.job.got))} more units, ${Math.ceil(S.job.left)}s left.`;
   if(S.earned>4000&&!S.hard.gpu) return 'Hardware tab has something faster than racks.';
   const nx=nextHall();
   if(nx>0&&!canOpenRow(S.hall)&&S.cash>=HALLS[nx].cost*0.5) return `${HALLS[S.hall].name} is full. ${HALLS[nx].name} is in the Floor tab.`;
@@ -1754,6 +1910,11 @@ function renderSiteTab(){
   listEl.appendChild(stat('Power',         ()=>`${STATS.draw.toFixed(0)} / ${STATS.cap.toFixed(0)} kW`, ()=>false));
   listEl.appendChild(stat('Hottest tile',  ()=>STATS.hottest.toFixed(0)+'°'));
   listEl.appendChild(stat('Machines',      ()=>String(STATS.machines)));
+  listEl.appendChild(sechead('What the outlines mean'));
+  listEl.appendChild(stat('Blue ring',   ()=>'a fan is cooling it'));
+  listEl.appendChild(stat('Green ring',  ()=>'a switch is feeding it'));
+  listEl.appendChild(stat('Gold glow',   ()=>'a spine is feeding it'));
+  listEl.appendChild(stat('Held tool',   ()=>'shows what it would reach'));
   listEl.appendChild(sechead('Trouble'));
   listEl.appendChild(stat('Faulted',       ()=>String(STATS.faults)));
   listEl.appendChild(stat('Leaking',       ()=>String(STATS.leaks)));

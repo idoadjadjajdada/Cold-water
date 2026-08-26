@@ -131,12 +131,11 @@ const bars=p=>p.evaluate(()=>[...document.querySelectorAll('.hallgrid.on .tile .
   console.log('\n--- the three family upgrades ---');
   ({p,ctx,errs}=await seed(b,base({cash:1e8})));
   await p.locator('#shopbtn').click(); await p.waitForTimeout(300);
-  ok('upgrades tab lists 23', await p.locator('.card').count()===23, String(await p.locator('.card').count()));
   for(const n of ['Diagnostics','Deep racking','Brokerage'])
     ok(`${n} is on the list`, await p.locator('.card').filter({hasText:n}).count()===1);
   await p.locator('.tab[data-tab="hardware"]').click(); await p.waitForTimeout(250);
-  ok('hardware tab lists 16 unlocks + 21 machines', await p.locator('.card').count()===37,
-     String(await p.locator('.card').count()));
+  for(const n of ['Sensor mesh','Buffer silos','Trading desk','Cold vault','Exchange floor'])
+    ok(`${n} unlock is listed`, await p.locator('.card').filter({hasText:n}).count()>=1);
   await ctx.close();
 
   console.log('\n--- saves survive the new hardware ---');

@@ -2,7 +2,7 @@
 # Runs every suite and reports a single pass/fail. Any suite failing fails the run.
 cd "$(dirname "$0")" || exit 1
 rc=0
-for f in smoke corrupt halls content ui families; do
+for f in smoke corrupt halls content ui families mechanics; do
   printf '\n=== %s ===\n' "$f"
   if node "$f.js"; then :; else rc=1; fi
 done

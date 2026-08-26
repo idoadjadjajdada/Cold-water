@@ -126,12 +126,15 @@ const base=extra=>Object.assign({v:3,cash:1000,earned:1000,tool:'rack',hall:0,
   console.log('\n--- new upgrades present ---');
   ({p,ctx,errs}=await seed(b,base({cash:1e6})));
   await p.locator('#shopbtn').click(); await p.waitForTimeout(300);
-  ok('upgrades tab lists 23', await p.locator('.card').count()===23, String(await p.locator('.card').count()));
+  /* Exact totals live in mechanics.js; here, check the upgrades this suite covers. */
+  for(const n of ['Air filters','Pipe seals','Line conditioner','Salvage yard'])
+    ok(`${n} is listed`, await p.locator('.card').filter({hasText:n}).count()===1);
   await p.locator('.tab[data-tab="automate"]').click(); await p.waitForTimeout(200);
-  ok('automate tab lists 9', await p.locator('.card').count()===9, String(await p.locator('.card').count()));
+  for(const n of ['Maintenance crew','Leak drone','Failover cluster','Grid tie'])
+    ok(`${n} is listed`, await p.locator('.card').filter({hasText:n}).count()===1);
   await p.locator('.tab[data-tab="hardware"]').click(); await p.waitForTimeout(200);
-  ok('hardware tab lists 16 unlocks + 21 machines', await p.locator('.card').count()===37,
-     String(await p.locator('.card').count()));
+  for(const n of ['UPS bank','CRAC plant','ASIC fab'])
+    ok(`${n} unlock is listed`, await p.locator('.card').filter({hasText:n}).count()>=1);
   await ctx.close();
 
   console.log('\n--- rebirth ---');
